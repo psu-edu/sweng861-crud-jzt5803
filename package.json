@@ -1,0 +1,48 @@
+{
+  "name": "sweng861-crud-jzt5803",
+  "version": "1.0.0",
+  "description": "**Name:** Jomar Thomas Almonte   **Course:** SWENG 861 | Software Construction",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/app.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psu-edu/sweng861-crud-jzt5803.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/psu-edu/sweng861-crud-jzt5803/issues"
+  },
+  "homepage": "https://github.com/psu-edu/sweng861-crud-jzt5803#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "globals": "^17.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,html}": [
+      "prettier --write"
+    ]
+  }
+}
