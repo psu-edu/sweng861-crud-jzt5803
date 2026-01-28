@@ -1,0 +1,31 @@
+@startuml
+skinparam componentStyle uml2
+
+package "External Systems" {
+  [Student Info System] as SIS
+  [Facilities Sensors] as Sensors
+}
+
+package "Campus Analytics Platform (Next.js)" {
+  [Frontend UI\n(Dashboard/Reports)] as UI
+  [API Routes\n(Ingest/Query)] as API
+  [Auth Module\n(NextAuth.js)] as Auth
+}
+
+database "Turso DB\n(libSQL)" as DB
+
+actor "Admin (Dean)" as Admin
+actor "Dept Head" as User
+
+' Relationships
+Admin --> UI : View Dashboard / Reports
+User --> UI : Input Data
+SIS --> API : Push Metrics (JSON)
+Sensors --> API : Push Sensor Data
+
+UI --> API : Fetch Aggregated Data
+UI --> Auth : Authenticate
+API --> DB : Read/Write User Data & Metrics
+API --> Auth : Validate Tokens
+
+@enduml

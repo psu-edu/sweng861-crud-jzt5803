@@ -1,9 +1,11 @@
-# SWENG 861 CRUD Project
+# Campus Analytics (Project R)
 
 **Name:** Jomar Thomas Almonte  
 **Course:** SWENG 861 | Software Construction
 
 ## Description
+
+This project is a centralized analytics dashboard designed to aggregate and visualize campus-wide trends for university administrators. It collects metrics from disparate domains (such as enrollment and facilities) to provide a unified view for data-driven decision-making. The system features Role-Based Access Control (RBAC) to ensure secure access for Deans and System Services.
 
 ## How to Run locally
 
@@ -57,3 +59,14 @@ Build and run the container:
 docker build -t sweng861-week1 .
 docker run -p 3000:3000 sweng861-week1
 ```
+
+## Architecture
+
+![Architecture Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/psu-edu/sweng861-crud-jzt5803/main/architecture.puml)
+_(See [architecture.puml](architecture.puml) for source)_
+
+## Tech Stack (Planned for Capstone)
+
+- **Framework:** Next.js (JavaScript)
+- **Database:** Turso (libSQL)
+- **Auth:** NextAuth / JWT
