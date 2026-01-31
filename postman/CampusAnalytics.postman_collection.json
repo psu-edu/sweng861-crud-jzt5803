@@ -1,0 +1,854 @@
+{
+  "info": {
+    "_postman_id": "campus-analytics-api",
+    "name": "Campus Analytics API",
+    "description": "RESTful API collection for Campus Analytics platform.\n\n## Setup\n1. Register a new user using the 'Register User' request\n2. Login using the 'Login' request\n3. The JWT token will be automatically saved to the collection variable\n4. All protected endpoints will use the saved token\n\n## Features\n- Authentication (Register, Login, Google OAuth)\n- Metrics CRUD Operations\n- Weather API Integration\n- Domain Events Viewer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "metricId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API is running and healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "Get API Documentation (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-docs.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api-docs.json"]
+            },
+            "description": "Get the OpenAPI/Swagger specification in JSON format"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"User registered successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.userId).to.exist;",
+                  "    pm.expect(jsonData.message).to.equal(\"User registered successfully\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            },
+            "description": "Register a new user account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token received\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    // Save token to collection variable",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Login with username and password to get JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Secure Data (Protected)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Protected data received\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.equal(\"This is protected data.\");",
+                  "    pm.expect(jsonData.user).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/secure-data",
+              "host": ["{{baseUrl}}"],
+              "path": ["secure-data"]
+            },
+            "description": "Access protected endpoint with JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Unauthorized Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/secure-data",
+              "host": ["{{baseUrl}}"],
+              "path": ["secure-data"]
+            },
+            "description": "Test that protected endpoints reject requests without token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metrics CRUD",
+      "item": [
+        {
+          "name": "Create Metric",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Metric created\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.exist;",
+                  "    pm.expect(jsonData.data.name).to.equal(\"Fall 2024 Enrollment\");",
+                  "    // Save metric ID for later tests",
+                  "    pm.collectionVariables.set(\"metricId\", jsonData.data.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Fall 2024 Enrollment\",\n    \"category\": \"enrollment\",\n    \"value\": 45000,\n    \"unit\": \"students\",\n    \"description\": \"Total student enrollment for Fall 2024 semester\",\n    \"metadata\": {\n        \"campus\": \"University Park\",\n        \"semester\": \"Fall 2024\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"]
+            },
+            "description": "Create a new metric"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Metrics list received\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get all metrics for the authenticated user with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metrics by Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All metrics have correct category\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(function(metric) {",
+                  "        pm.expect(metric.category).to.equal(\"enrollment\");",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics?category=enrollment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "enrollment"
+                }
+              ]
+            },
+            "description": "Filter metrics by category"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metric by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Correct metric returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.equal(pm.collectionVariables.get(\"metricId\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/{{metricId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics", "{{metricId}}"]
+            },
+            "description": "Get a specific metric by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Metric",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Metric updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.value).to.equal(46500);",
+                  "    pm.expect(jsonData.message).to.equal(\"Metric updated successfully\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"value\": 46500,\n    \"description\": \"Updated enrollment count for Fall 2024\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/{{metricId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics", "{{metricId}}"]
+            },
+            "description": "Update an existing metric"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Metric",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Metric deleted\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.equal(\"Metric deleted successfully\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/{{metricId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics", "{{metricId}}"]
+            },
+            "description": "Delete a metric"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation error returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.equal(\"Validation failed\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Invalid Metric\",\n    \"category\": \"invalid_category\",\n    \"value\": \"not_a_number\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics"]
+            },
+            "description": "Test validation error handling"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Weather API (3rd Party Integration)",
+      "item": [
+        {
+          "name": "Fetch Weather Preview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Weather data received\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.temperature).to.exist;",
+                  "    pm.expect(jsonData.data.latitude).to.exist;",
+                  "    pm.expect(jsonData.data.longitude).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather/preview?latitude=40.7983&longitude=-77.8599",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather", "preview"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "40.7983",
+                  "description": "Penn State University Park"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-77.8599"
+                }
+              ]
+            },
+            "description": "Fetch weather data without saving to database"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch and Save Weather",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Weather data saved\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.exist;",
+                  "    pm.expect(jsonData.message).to.include(\"saved\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?latitude=40.7983&longitude=-77.8599",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "40.7983"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-77.8599"
+                }
+              ]
+            },
+            "description": "Fetch weather data and save to database"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weather History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"History returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather/history?limit=10&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get user's weather data history"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cache Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Cache stats returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather/cache/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather", "cache", "stats"]
+            },
+            "description": "Get weather cache statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Invalid Coordinates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.equal(\"Validation failed\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather/preview?latitude=999&longitude=-77.8599",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather", "preview"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "999",
+                  "description": "Invalid latitude"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-77.8599"
+                }
+              ]
+            },
+            "description": "Test validation of invalid coordinates"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Domain Events",
+      "item": [
+        {
+          "name": "Get Domain Events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Events list returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get domain events for the authenticated user"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "BOLA Prevention Tests",
+      "item": [
+        {
+          "name": "Access Other User's Metric (Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// This test requires setting up two users",
+                  "// The test expects 403 or 404 when trying to access another user's data",
+                  "pm.test(\"Access denied or not found\", function () {",
+                  "    pm.expect([403, 404]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/00000000-0000-0000-0000-000000000001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics", "00000000-0000-0000-0000-000000000001"]
+            },
+            "description": "Attempt to access a metric that doesn't belong to the authenticated user"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

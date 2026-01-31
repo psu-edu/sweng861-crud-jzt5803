@@ -1,10 +1,12 @@
 {
   "name": "sweng861-crud-jzt5803",
   "version": "1.0.0",
-  "description": "**Name:** Jomar Thomas Almonte   **Course:** SWENG 861 | Software Construction",
+  "description": "Campus Analytics Backend - SWENG 861 | Software Construction",
   "main": "index.js",
   "scripts": {
     "start": "node backend/app.js",
+    "dev": "node --watch backend/app.js",
+    "test": "node --test backend/tests/*.test.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "prepare": "husky"
@@ -13,23 +15,33 @@
     "type": "git",
     "url": "git+https://github.com/psu-edu/sweng861-crud-jzt5803.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "campus-analytics",
+    "crud",
+    "rest-api"
+  ],
+  "author": "Jomar Thomas Almonte",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/psu-edu/sweng861-crud-jzt5803/issues"
   },
   "homepage": "https://github.com/psu-edu/sweng861-crud-jzt5803#readme",
   "dependencies": {
+    "axios": "^1.6.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.1.0",
     "express-session": "^1.19.0",
+    "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.3",
+    "node-cache": "^5.1.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

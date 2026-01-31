@@ -1,0 +1,64 @@
+# Campus Analytics API - Docker Compose Configuration
+# Use: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # Campus Analytics API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campus-analytics-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_change_in_production}
+      - SESSION_SECRET=${SESSION_SECRET:-your_session_secret_here_change_in_production}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      # Persist SQLite database
+      - sqlite_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - campus-analytics-network
+
+  # Development service with hot reload
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: campus-analytics-api-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=dev_jwt_secret
+      - SESSION_SECRET=dev_session_secret
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./index.html:/app/index.html:ro
+    command: npm run dev
+    profiles:
+      - development
+    networks:
+      - campus-analytics-network
+
+volumes:
+  sqlite_data:
+    driver: local
+
+networks:
+  campus-analytics-network:
+    driver: bridge
