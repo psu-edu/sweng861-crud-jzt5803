@@ -1,17 +1,13 @@
-const globals = require('globals');
-const pluginJs = require('@eslint/js');
+const { FlatCompat } = require('@eslint/eslintrc');
+const path = require('path');
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
 
 module.exports = [
-  pluginJs.configs.recommended,
+  ...compat.extends('next/core-web-vitals'),
   {
-    files: ['**/*.js'],
-    languageOptions: {
-      ecmaVersion: 12,
-      sourceType: 'commonjs',
-      globals: {
-        ...globals.node,
-      },
-    },
     rules: {
       'no-unused-vars': 'warn',
       'no-console': 'off',

@@ -1,22 +1,22 @@
-# Campus Analytics API - Docker Compose Configuration
+# Campus Analytics - Docker Compose Configuration
 # Use: docker-compose up -d
 
 version: '3.8'
 
 services:
-  # Campus Analytics API Service
-  api:
+  # Campus Analytics Next.js Service
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: campus-analytics-api
+    container_name: campus-analytics-app
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change_this_nextauth_secret_minimum_32_characters}
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_change_in_production}
-      - SESSION_SECRET=${SESSION_SECRET:-your_session_secret_here_change_in_production}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     volumes:
@@ -24,31 +24,31 @@ services:
       - sqlite_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     networks:
       - campus-analytics-network
 
   # Development service with hot reload
-  api-dev:
+  app-dev:
     build:
       context: .
       dockerfile: Dockerfile
-      target: builder
-    container_name: campus-analytics-api-dev
+      target: deps
+    container_name: campus-analytics-app-dev
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=development
-      - PORT=3000
+      - NEXTAUTH_URL=http://localhost:3001
+      - NEXTAUTH_SECRET=dev_nextauth_secret_minimum_32_characters_long
       - JWT_SECRET=dev_jwt_secret
-      - SESSION_SECRET=dev_session_secret
     volumes:
-      - ./backend:/app/backend:ro
-      - ./index.html:/app/index.html:ro
+      - .:/app
+      - /app/node_modules
     command: npm run dev
     profiles:
       - development
