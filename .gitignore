@@ -145,5 +145,11 @@ docs/*.md
 # PDF files
 *.pdf
 
+# Documentation files
+*.docx
+*.doc
+*.xlsx
+*.pptx
+
 # SQLite database
 database.sqlite
