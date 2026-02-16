@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test __tests__/*.test.js",
+    "test": "jest --verbose",
+    "test:unit": "jest --verbose --testPathPattern='__tests__/unit'",
+    "test:frontend": "jest --verbose --testPathPattern='__tests__/frontend'",
+    "test:integration": "node --test __tests__/api.test.js",
+    "test:coverage": "jest --coverage --verbose",
+    "test:all": "npm run test:coverage && npm run test:integration",
+    "test:ci": "jest --coverage --ci --verbose && node --test __tests__/api.test.js",
     "format": "prettier --write .",
     "prepare": "husky"
   },
@@ -27,6 +33,7 @@
   },
   "homepage": "https://github.com/psu-edu/sweng861-crud-jzt5803#readme",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "axios": "^1.6.0",
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
@@ -37,15 +44,22 @@
     "react-dom": "^19.0.0",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
-    "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@jest/globals": "^30.2.0",
+    "@swc/jest": "^0.2.39",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.1.0",
     "globals": "^17.1.0",
     "husky": "^9.1.7",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "lint-staged": "^16.2.7",
     "prettier": "^3.8.1"
   },
