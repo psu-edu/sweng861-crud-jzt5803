@@ -1,0 +1,52 @@
+# .dockerignore
+# Excludes files and directories that should not be copied into the Docker image.
+# Keeping the build context small improves build speed and avoids leaking
+# sensitive files or development/test artifacts into production images.
+
+# --- Dependencies (rebuilt inside the image) ---
+node_modules
+
+# --- Next.js build output (rebuilt inside the image) ---
+.next
+
+# --- Environment / secrets ---
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+
+# --- Markdown documentation (keep README.md, exclude everything else) ---
+*.md
+!README.md
+
+# --- Test coverage output ---
+coverage/
+
+# --- Test source files (not needed at runtime) ---
+__tests__/
+
+# --- Version control metadata ---
+.git
+.gitignore
+.gitattributes
+
+# --- CI/CD configuration ---
+.github
+
+# --- Local SQLite database (runtime data, not baked into image) ---
+database.sqlite
+
+# --- Project documentation directory ---
+docs/
+
+# --- Editor / OS artifacts ---
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# --- Logs ---
+*.log
+npm-debug.log*

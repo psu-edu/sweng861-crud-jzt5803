@@ -5,6 +5,8 @@ import { handleApiError } from '@/lib/apiErrors';
 import { validateMetricCreate, VALID_CATEGORIES } from '@/lib/validation';
 import { apiLimiter, createLimiter } from '@/lib/rateLimit';
 import eventEmitter from '@/lib/services/eventEmitter';
+import logger from '@/lib/logger';
+import { recordRequest, recordMetricCreated } from '@/lib/metrics';
 
 export async function GET(request) {
   try {
@@ -43,6 +45,7 @@ export async function GET(request) {
       offset,
     });
 
+    recordRequest('GET', '/api/metrics', 200, 0);
     return NextResponse.json({
       data: rows,
       pagination: {
@@ -108,6 +111,16 @@ export async function POST(request) {
       { name, category, value, unit },
       user.id
     );
+
+    recordMetricCreated();
+    logger.info('Metric created', {
+      userId: user.id,
+      metricId: metric.id,
+      category,
+      name,
+      route: '/api/metrics',
+      method: 'POST',
+    });
 
     return NextResponse.json(
       { message: 'Metric created successfully', data: metric },

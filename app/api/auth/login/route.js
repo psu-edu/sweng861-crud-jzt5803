@@ -4,6 +4,8 @@ import { ensureDb, User } from '@/lib/models';
 import { signToken } from '@/lib/auth';
 import { handleApiError } from '@/lib/apiErrors';
 import { authLimiter } from '@/lib/rateLimit';
+import logger from '@/lib/logger';
+import metrics from '@/lib/metrics';
 
 export async function POST(request) {
   try {
@@ -54,7 +56,13 @@ export async function POST(request) {
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      console.log(`[Auth] Failed login attempt for user: ${username}`);
+      logger.warn('Login failed', {
+        username,
+        route: '/api/auth/login',
+        method: 'POST',
+      });
+      metrics.recordLogin(false);
+      metrics.recordRequest('POST', '/api/auth/login', 401, 0);
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -62,7 +70,14 @@ export async function POST(request) {
     }
 
     const token = signToken(user);
-    console.log(`[Auth] User logged in: ${username}`);
+    logger.info('Login successful', {
+      username,
+      userId: user.id,
+      route: '/api/auth/login',
+      method: 'POST',
+    });
+    metrics.recordLogin(true);
+    metrics.recordRequest('POST', '/api/auth/login', 200, 0);
 
     return NextResponse.json({
       message: 'Login successful',
