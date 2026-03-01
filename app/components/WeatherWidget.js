@@ -63,15 +63,16 @@ export default function WeatherWidget() {
   if (error) return <p className="text-gray-400 text-sm">{error}</p>;
   if (!weather) return null;
 
+  const tempF = Math.round((weather.temperature * 9) / 5 + 32);
+  const windMph = Math.round(weather.windSpeed * 0.621371 * 10) / 10;
+
   return (
     <div className="space-y-2 text-sm">
-      <p className="text-2xl font-bold text-gray-900">
-        {weather.temperature}°C
-      </p>
+      <p className="text-2xl font-bold text-gray-900">{tempF}°F</p>
       <p className="text-gray-600">{weather.description}</p>
       <div className="flex flex-wrap gap-x-4 text-gray-500">
         <span>Humidity: {weather.humidity}%</span>
-        <span>Wind: {weather.windSpeed} km/h</span>
+        <span>Wind: {windMph} mph</span>
       </div>
       <p className="text-xs text-gray-400">Penn State University Park</p>
       <button

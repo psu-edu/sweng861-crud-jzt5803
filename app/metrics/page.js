@@ -196,7 +196,9 @@ function MetricsContent() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {metric.value} {metric.unit}
+                    {metric.unit === 'USD'
+                      ? `$${Number(metric.value).toLocaleString('en-US')} USD`
+                      : `${Number(metric.value).toLocaleString('en-US')} ${metric.unit ?? ''}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm hidden sm:table-cell">
                     {new Date(metric.recordedAt).toLocaleDateString()}
