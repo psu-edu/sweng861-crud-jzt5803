@@ -3,119 +3,155 @@
   Final Project Presentation – Video Narration Script
   SWENG 861: Software Construction | Spring 2026 | Penn State University
   Student: Jomar Thomas Almonte
-  Target runtime: ~9 minutes  (6:00 slides + 0:30 wrap-up + 2:30 demo)
-
-  FORMAT: Assertion-Evidence
-  Each slide title is a claim. Each body is the proof.
-  State the assertion, point to the evidence, move on.
+  Target: ~9 minutes (slides + wrap-up) + 2–3 min demo separately
 ================================================================================
 
 NOTES BEFORE RECORDING:
-  - Slides open and ready on Slide 1
-  - Terminal open in project directory (docker-compose up -d already running)
-  - Browser tabs pre-loaded: localhost:3000 (logged in), localhost:4000 (Grafana)
-  - Speak at a deliberate pace — slow is cleaner than fast
-  - Pause one beat at each [CLICK] before continuing
+  - Slides open on Slide 1, terminal and browser ready
+  - Read at a calm, deliberate pace — slower is always better than faster
+  - Pause one beat after each [CLICK] before you start speaking again
+  - If running long, see the cut guide at the bottom
 ================================================================================
 
 
 ================================================================================
-  SECTION 1: INTRODUCTION
-  Target: ~20 seconds  [00:00 – 00:20]
+  SECTION 1: INTRODUCTION  (~30 sec)  [00:00–00:30]
 ================================================================================
 
 [00:00]
 
-Hi, I'm Jomar Almonte. This is my final project for SWENG 861 at Penn State —
-the Campus Analytics Platform, a full-stack web application with secure
-authentication, metrics CRUD, live weather data, automated testing, and a
-production-grade DevOps pipeline. Nine slides, then a live demo.
+Hi, I'm Jomar Almonte. This is my final project for SWENG 861 at Penn State,
+Spring 2026.
+
+The project is called Campus Analytics — a full-stack web app for tracking
+university metrics like enrollment, finances, and academic performance. It has
+secure authentication, live weather data, automated testing, and a full DevOps
+pipeline behind the scenes.
+
+I've got nine slides. For each one, I'll state the claim up front and then
+walk you through the evidence that backs it up.
 
 [CLICK to next slide]
 
 
 ================================================================================
-  SECTION 2: SLIDES WALKTHROUGH
-  Target: ~6 minutes  [00:20 – 06:20]
+  SECTION 2: SLIDES  (~7:40)  [00:30–08:10]
 ================================================================================
 
 ---SLIDE 2 — Requirements---
 
-[00:20]
+[00:30]
 
-ASSERTION: Campus Analytics eliminates university metrics data silos.
+The claim here is that Campus Analytics eliminates university metrics data silos.
 
-The left side shows the three specific failures it solves: no audit trail,
-no access control, no single source of truth. The right side is the direct
-counter-evidence — seven features shipped. Every item on the right closes one
-of those gaps. The non-functionals are also met: OWASP mitigations, 99.5%
-availability target, 320 tests blocking broken builds.
+On the left, you can see the three specific problems it solves. There's no audit
+trail — nobody knows who changed what or when. There's no access control —
+anyone with the spreadsheet can edit any data. And there's no single source of
+truth — every department is working from a different version of the file.
+
+On the right is the evidence — seven features, all shipped. Secure login with
+JWT and Google OAuth. A five-category metrics system. A live weather widget.
+An audit trail that's append-only and can't be modified. Prometheus and Grafana
+for observability. GitHub Actions for CI/CD. And a Docker image that runs
+without root privileges.
+
+The non-functional targets aren't just listed — they're implemented. OWASP Top
+10 mitigations for security. A 99.5% availability target and p95 latency under
+500ms for reliability. And 320 automated tests that block any broken build from
+ever getting packaged.
 
 [CLICK to next slide]
 
 
 ---SLIDE 3 — Architecture---
 
-[01:00]
+[01:30]
 
-ASSERTION: Next.js 15 collapses frontend and API into one deploy unit.
+The claim is that Next.js 15 collapses the frontend and API into one single
+deploy unit.
 
-Four-line proof on the left: one codebase, one Docker image, no CORS, no split
-infrastructure. The architecture diagram on the right shows why — the browser,
-API routes, database, and DevOps layer all live in a single Next.js app.
-Frontend and backend share one process. One npm build produces the entire
-production artifact.
+On the left, the four-line proof: one codebase, one Docker image, no CORS,
+no split infrastructure. The diagram on the right shows what that looks like.
+The browser, the fifteen API route handlers, the SQLite database, and the
+DevOps stack all live inside one Next.js application. One build command
+produces the entire thing.
+
+Most web projects need two separate deployments — a React frontend and a
+Node.js backend. With Next.js App Router, you get both in one. That's one
+fewer image to build, one fewer server to scale, and zero CORS headers
+to configure.
 
 [CLICK to next slide]
 
 
 ---SLIDE 4 — Technology Stack---
 
-[01:40]
+[02:25]
 
-ASSERTION: Every technology choice minimizes overhead and maximizes testability.
+The claim here is that every technology choice was made to minimize overhead
+and maximize testability.
 
-The "Why" column is the assertion for each row. SQLite and Sequelize: zero
-infrastructure needed to start. Open-Meteo API: free, keyless, no secrets to
-manage. Jest plus RTL: 320 tests block broken builds from ever reaching Docker.
-Prometheus plus Grafana: SLO dashboards with no external cloud dependency.
-Every choice has a specific, testable reason.
+The "Why" column gives a specific reason for each one. Let me call out a few.
+
+SQLite and Sequelize: zero infrastructure to start. The database file gets
+created automatically on first run. No database server, no setup step.
+
+Open-Meteo for weather: it's free and keyless, so there are no API secrets
+to manage, rotate, or accidentally commit.
+
+Jest and React Testing Library: 320 tests run in CI. If any one of them
+fails, the build stops right there — nothing gets packaged into Docker.
+
+And Prometheus plus Grafana: a five-panel SLO dashboard, no external cloud
+dependency. It runs in the same docker-compose stack as the app.
 
 [CLICK to next slide]
 
 
 ---SLIDE 5 — Core Features---
 
-[02:20]
+[03:25]
 
-ASSERTION: Multi-layer defense delivers seven production-grade features.
+The claim is that multi-layer defense delivers seven production-grade features.
 
-On the left — auth and security. JWT, NextAuth, and OAuth all resolve through
-one getAuthUser call. bcrypt cost 12 deliberately slows brute force. HSTS and
-BOLA checks ship on every response.
+On the left, auth and security. JWT, NextAuth sessions, and Google OAuth all
+go through one getAuthUser function — the route handlers don't care which
+token type the client is using. Brute force is blocked at two levels: bcrypt
+at cost 12 deliberately adds 200ms per hash check, and the rate limiter cuts
+off after five auth attempts per fifteen-minute window per IP. HSTS, BOLA
+owner checks, and sensitive key stripping from logs ship on every response.
 
-On the right — data features. Five server-enforced categories, UUID keys,
-US locale formatting, a ten-minute weather cache, and an append-only audit trail
-written asynchronously so it never slows the API response.
+On the right, the data features. Five server-enforced category enums, UUID
+keys to prevent ID enumeration, US locale formatting everywhere, a ten-minute
+weather cache so we're not hammering the external API, and an audit trail that
+writes every mutation asynchronously — so it never slows down the API response.
 
 [CLICK to next slide]
 
 
 ---SLIDE 6 — DevOps and Observability---
 
-[03:00]
+[04:25]
 
-ASSERTION: Every commit is automatically built, tested, and packaged. No manual
-steps.
+The claim is that every commit is automatically built, tested, and packaged —
+no manual steps.
 
-The pipeline diagram on the left shows two jobs. Job one: npm ci, build, Jest
-coverage — no continue-on-error, so any test failure kills the pipeline right
-there. Then npm audit. Job two runs only if job one passes: three-stage Docker
-build, non-root user nextjs:1001, smoke test against /api/health five times.
+The pipeline diagram on the left shows two jobs. Job one is build and test.
+npm ci does a lockfile-exact install so it's reproducible every time.
+npm run build compiles the Next.js output. Then npm run test with coverage
+collection — and there's no continue-on-error flag, so one failing test stops
+the pipeline right there. That's the quality gate. After that, npm audit
+rejects anything with a high or critical CVE.
 
-On the right — three observability lines: three health endpoints with distinct
-roles, structured JSON logs with sensitive keys stripped, and four Prometheus
-metrics powering a five-panel Grafana dashboard. SLOs: 99.5% availability,
+Job two only starts if job one passes. It builds the Docker image in three
+stages — install, build, then a minimal Alpine runtime that has no source code
+and no dev dependencies in it. The container runs as user nextjs with UID 1001,
+never as root. Then a smoke test: it calls /api/health five times and if the
+app doesn't respond, the pipeline fails.
+
+On the right, three observability lines. Three health endpoints each with one
+role. Structured JSON logs with sensitive keys stripped. Four Prometheus metrics
+feeding a five-panel Grafana dashboard, with SLOs at 99.5% availability and
 p95 latency under 500ms.
 
 [CLICK to next slide]
@@ -123,24 +159,33 @@ p95 latency under 500ms.
 
 ---SLIDE 7 — AI Audit---
 
-[03:50]
+[05:40]
 
-ASSERTION: AI-generated code contained three security flaws — all caught by
-manual review.
+The claim is that AI-generated code had three security flaws — and all three
+were caught by manual review.
 
-First, where AI helped: scaffolding the CI YAML, the Dockerfile structure, and
-the Prometheus config saved significant time. I would use it again for those
-tasks.
+Quick note on where AI actually helped: scaffolding the initial CI YAML, the
+Dockerfile structure, and the Prometheus config all saved real time. I'd use
+it again for those tasks. But every file it touched that involved infrastructure
+or security got a manual review before I committed it. That review is what
+found these three.
 
-But every infrastructure file went through a security review. That review found:
-hard-coded JWT_SECRET in the YAML — credentials permanently in git history.
-continue-on-error true on tests — broken builds passing the quality gate.
-No USER directive in the Dockerfile — container running as root.
+First: hard-coded JWT_SECRET in the YAML — credentials sitting in git history,
+visible to anyone with repo access. Fixed by using a GitHub Secrets reference.
 
-Three fixes applied. The lesson is in the table: AI optimizes for working code,
-not security defaults.
+Second: continue-on-error true on the test step — failing tests would show
+a green pipeline. That defeats the whole point of CI. Fixed by removing
+the flag entirely.
 
-The five lines at the bottom are technical challenges resolved during
+Third: no USER directive in the Dockerfile — the process would run as root.
+If any dependency had a remote code execution bug, an attacker would land
+as root. Fixed by adding a non-root user before the CMD.
+
+The lesson at the bottom of the table: AI optimizes for working code,
+not for security defaults. Every AI output that touches infrastructure
+needs a security pass.
+
+The five lines below the table are separate technical challenges I hit during
 development — each one was a root-cause investigation, not a quick fix.
 
 [CLICK to next slide]
@@ -148,36 +193,48 @@ development — each one was a root-cause investigation, not a quick fix.
 
 ---SLIDE 8 — Testing---
 
-[04:45]
+[07:00]
 
-ASSERTION: 320 tests across three isolation layers form a CI quality gate.
+The claim is that 320 tests across three isolation layers form a CI quality gate.
 
-The table shows the three layers. Unit tests — 196 cases, no external
-dependencies, run in milliseconds. Frontend tests — 124 cases, React Testing
-Library in jsdom, no browser. Integration tests — real HTTP calls against a live
-server, run locally.
+The table has three columns. Column one: 196 unit tests covering auth,
+validation, rate limiting, domain events, API errors, weather service, and
+middleware. No external dependencies, no database, no HTTP calls. Fast.
 
-The bottom right cell is the gate rule: pipeline FAILS if any test fails.
-The Docker build stage never starts until all 320 pass.
+Column two: 124 frontend component tests using React Testing Library in jsdom.
+No browser needed. They cover every interactive component — login form,
+metric form, navbar, weather widget, auth provider, and the API client.
+
+Column three: integration tests. One file, api.test.js, using Node's built-in
+test runner against a live server on port 3001. The full cycle — register,
+login, CRUD, weather, domain events. These run locally because they need a
+running server; they're not in CI.
+
+The bottom right cell is the quality gate rule: if any test fails, the pipeline
+stops. The Docker build stage never starts.
 
 [CLICK to next slide]
 
 
 ---SLIDE 9 — Reflections---
 
-[05:25]
+[07:55]
 
-ASSERTION: Observability must be designed in — not bolted on.
+The claim is that observability has to be designed in — not bolted on.
 
-Left column — three things built from scratch: a zero-dependency Prometheus
-module, a unified auth bridge, and two infrastructure bugs caught only via
-end-to-end QA.
+Left column: three things built from scratch. A zero-dependency Prometheus
+module — 170 lines of plain Node.js, no external libraries. A unified auth
+bridge so JWT, NextAuth, and OAuth are all transparent to the route handlers.
+And two infrastructure bugs that only showed up in end-to-end QA, not in
+any of the 320 tests.
 
-Middle column — three lessons: log JSON before you need it, AI drafts but
-humans review security, and end-to-end testing surfaces what unit tests miss.
+Middle column: three lessons. Log structured JSON before you need it — adding
+it after the fact would mean touching every route handler. AI drafts, humans
+review security — the previous slide is the evidence. And end-to-end testing
+finds what unit tests miss.
 
-Right column — what breaks at scale: SQLite becomes PostgreSQL, the in-memory
-rate limiter becomes Redis, and single-instance becomes Kubernetes.
+Right column: what breaks at scale. SQLite becomes PostgreSQL. The in-memory
+rate limiter becomes Redis. Single-instance becomes Kubernetes.
 
 [PAUSE — read the quote on screen]
 
@@ -185,105 +242,93 @@ rate limiter becomes Redis, and single-instance becomes Kubernetes.
 
 
 ================================================================================
-  WRAP-UP
-  Target: ~20 seconds  [06:20 – 06:40]
+  WRAP-UP  (~50 sec)  [08:50–09:40]
 ================================================================================
 
-[06:20]
+[08:50]
 
-What I am most proud of: the zero-dependency Prometheus module, the 320-test
-suite, and the fact that when two real infrastructure bugs surfaced in Week 7,
-the observability tooling made them diagnosable quickly.
+Let me close with what I actually learned from this.
 
-These patterns — CI/CD, structured logging, multi-layer auth, metrics dashboards
-— are universal. This project gave me a working implementation of all of them.
+The hardest parts weren't the features — they were two infrastructure bugs that
+no unit test caught. One was a one-word fix: sync instead of sync-with-alter.
+The other was aligning three-level fallback chains across two files. Both bugs
+were only findable by running the actual application end-to-end. That's the
+best evidence for the assertion on the last slide.
 
-Now let me show it running.
+What I'm most proud of: the zero-dependency Prometheus module, the 320-test
+suite, and the multi-layer auth bridge that makes all three token types
+invisible to the route handlers.
+
+The patterns from this project — CI/CD, structured logging, health checks,
+metrics dashboards — show up in every production system. The tools change.
+The patterns don't. This project gave me a working implementation of all of
+them, not just the concepts.
+
+Now I'll do the live demo.
 
 [SWITCH to terminal and browser]
 
 
 ================================================================================
-  SECTION 3: LIVE DEMO
-  Target: ~2:30  [06:40 – 09:10]
+  DEMO  (additional — 2 to 3 min, not part of the 9-min budget)
 ================================================================================
 
+[NOTE: Continue recording directly after the wrap-up, or start a new clip.
+       The slides end at "Now I'll do the live demo."]
 
---- DEMO STEP 1: Start (15 sec) ---
 
-[DEMO 00:00]
-
-[OPEN terminal in project directory]
+--- DEMO STEP 1: Start the Stack (~15 sec) ---
 
 [TYPE: docker-compose up -d]
 
-One command starts the app on port 3000, Prometheus on 9090, and Grafana on
-4000 with the dashboard pre-provisioned.
+One command starts three services: the app on port 3000, Prometheus on 9090,
+and Grafana on 4000 with the dashboard pre-provisioned.
 
-[WAIT for containers to start — ~10 seconds]
+[WAIT about 10 seconds for everything to initialize]
 
 
---- DEMO STEP 2: Login and Metrics CRUD (75 sec) ---
-
-[DEMO 00:15]
+--- DEMO STEP 2: Login and Metrics CRUD (~75 sec) ---
 
 [OPEN browser: http://localhost:3000]
 
-I'll log in as the superadmin account.
-
 [TYPE: superadmin / Campus123! → CLICK Sign In]
 
-[SHOW: dashboard — "superadmin Admin" badge visible in navbar]
-
-Dashboard is up. The Admin badge confirms the role. Weather widget in the
-corner — Fahrenheit, miles per hour, Penn State coordinates.
+Logged in as superadmin. The Admin badge in the navbar confirms the role.
+Weather widget in the corner — Penn State coordinates, Fahrenheit, miles per
+hour.
 
 [CLICK: Metrics in the navigation]
-
-[SHOW: 20 pre-seeded rows]
 
 Twenty pre-seeded metrics. Notice the formatting — "47,892 students" and
 "$2,100,000,000 USD" — US locale, not raw numbers.
 
 [CLICK: Create Metric]
 
-[TYPE: Name = Spring 2026 Research Activity, Category = academic, Value = 425,
-       Unit = active projects → CLICK Create Metric]
+[TYPE: Name = Spring 2026 Research Activity, Category = academic,
+       Value = 425, Unit = active projects → CLICK Create Metric]
 
-[DEMO 01:00]
+That validated the input, wrote the record, fired the audit event
+asynchronously, and incremented the Prometheus counter.
 
-That request validated input, wrote the record, fired the domain event
-asynchronously, and incremented the Prometheus counter. Here it is in the list.
-
-[SHOW: new metric visible in list]
+[SHOW: new metric in the list]
 
 
---- DEMO STEP 3: Grafana Dashboard (60 sec) ---
+--- DEMO STEP 3: Grafana Dashboard (~60 sec) ---
 
-[DEMO 01:20]
+[OPEN: http://localhost:4000 → LOGIN: admin / campus123]
 
-[OPEN browser tab: http://localhost:4000]
+[NAVIGATE to: Campus Analytics - Observability dashboard]
 
-[LOGIN: admin / campus123]
+Five panels, auto-provisioned from Prometheus.
 
-[NAVIGATE: Dashboards → Campus Analytics - Observability]
+Request rate shows the spike from the demo. Error rate is flat near zero —
+that's the correct state. p95 latency is well under 500ms. The Metrics Created
+counter ticked up when I created that record. Successful Logins shows the auth
+event from the login.
 
-[SHOW: all 5 panels]
-
-This is the observability evidence. Five panels auto-provisioned from Prometheus
-scrapes.
-
-Request rate shows the spike from the demo activity just now. Error rate is flat
-near zero — correct state. p95 latency is well under the 500ms SLO. The Metrics
-Created counter ticked up when I created the research activity record. Successful
-Logins shows the auth event from the login a minute ago.
-
-[DEMO 02:00]
-
-This is how you catch a bad deploy in production: the error rate panel spikes,
-p95 climbs past the SLO, and you trace it to the responsible route before it
-affects users. Rollback, confirm metrics return to baseline. That is production
-observability in practice.
+If a bad deploy caused an error rate spike, you'd see it here in real time.
+p95 climbs past the SLO, you trace it to the route, roll back, and confirm
+the metrics return to baseline. That's observability in practice.
 
 Thank you.
 
@@ -292,27 +337,27 @@ Thank you.
   END OF SCRIPT
 ================================================================================
 
-TOTAL TARGET RUNTIME: ~9 minutes at deliberate speaking pace.
-
 TIMING GUIDE:
-  Introduction:       ~0:20  [00:00–00:20]
-  Slide 2 (Req):      ~0:40  [00:20–01:00]
-  Slide 3 (Arch):     ~0:40  [01:00–01:40]
-  Slide 4 (Stack):    ~0:40  [01:40–02:20]
-  Slide 5 (Features): ~0:40  [02:20–03:00]
-  Slide 6 (DevOps):   ~0:50  [03:00–03:50]
-  Slide 7 (AI Audit): ~0:55  [03:50–04:45]
-  Slide 8 (Testing):  ~0:40  [04:45–05:25]
-  Slide 9 (Reflect):  ~0:55  [05:25–06:20]
-  Wrap-up:            ~0:20  [06:20–06:40]
+  Introduction:       ~0:30  [00:00–00:30]
+  Slide 2 (Req):      ~1:00  [00:30–01:30]
+  Slide 3 (Arch):     ~0:55  [01:30–02:25]
+  Slide 4 (Stack):    ~1:00  [02:25–03:25]
+  Slide 5 (Features): ~1:00  [03:25–04:25]
+  Slide 6 (DevOps):   ~1:15  [04:25–05:40]
+  Slide 7 (AI Audit): ~1:20  [05:40–07:00]
+  Slide 8 (Testing):  ~0:55  [07:00–07:55]
+  Slide 9 (Reflect):  ~0:55  [07:55–08:50]
+  Wrap-up:            ~0:50  [08:50–09:40]
   ─────────────────────────────────────────
-  Slides + wrap-up:   ~6:40
-  Live Demo:          ~2:30  [06:40–09:10]
+  SLIDES + WRAP-UP:   ~9:40  (speak slightly faster to hit 9:00 even)
+  Demo (additional):  ~2:30–3:00
   ─────────────────────────────────────────
-  TOTAL:              ~9:10
+  TOTAL RECORDING:    ~11:30–12:40
 
-IF RUNNING LONG — cut points (in order):
-  1. Slide 4: drop the last 2 table rows from narration
-  2. Slide 7: cut the "five challenges" sentence entirely
-  3. Demo Step 3: skip the "bad deploy incident" paragraph at DEMO 02:00
+IF RUNNING LONG — cut in this order:
+  1. Slide 4: drop the last two "Why" callouts (Prometheus row)
+  2. Slide 5: cut the BOLA / key-stripping sentence
+  3. Slide 7: skip naming each flaw individually; just say "three flaws found,
+     all fixed — the table has the details"
+  4. Wrap-up: cut the two "hardest part" sentences, keep proud-of + career
 ================================================================================
