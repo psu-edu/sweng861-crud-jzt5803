@@ -4,10 +4,14 @@
   SWENG 861: Software Construction | Spring 2026 | Penn State University
   Student: Jomar Thomas Almonte
   Target runtime: 12–13 minutes at normal speaking pace
+
+  FORMAT: Assertion-Evidence
+  Each slide section opens by STATING THE ASSERTION (the slide title claim),
+  then walks through the EVIDENCE that proves it.
 ================================================================================
 
 NOTES TO SELF BEFORE RECORDING:
-  - Have the PowerPoint open and ready on slides 1 of 9
+  - Have the PowerPoint open and ready on slide 1 of 9
   - Have a terminal open, logged into the project directory
   - Have a browser ready with tabs pre-loaded for localhost:3000, :9090, :4000
   - Read slowly and deliberately — do NOT rush
@@ -34,21 +38,22 @@ The project I built is called the Campus Analytics Platform. It is a full-stack
 web application that lets university faculty and department heads track
 institutional metrics — things like enrollment figures, financial data, and
 academic performance — all in one place, with a secure login, a live weather
-widget pulling conditions right here from the Penn State campus, and a fully
+widget pulling conditions from Penn State's campus coordinates, and a fully
 automated DevOps pipeline behind the scenes.
 
 [00:35]
 
 What I want to walk you through today is how this application came together
-across seven weeks of the course — each week adding a new layer, from the
-initial API design all the way through containerization, observability, and
-production-grade security practices.
+across seven weeks — each week adding a new layer, from the initial API design
+all the way through containerization, observability, and production-grade
+security practices.
 
 [00:50]
 
-I will start with the slides to give you the high-level picture, and then I
-will switch over to a live demo of the running application so you can see
-everything in action.
+I will use an assertion-evidence structure for each slide. The title of every
+slide is a direct claim — an assertion. The body of the slide is the evidence
+that backs it up. I will state the assertion first, then walk you through
+the proof.
 
 Let's get started.
 
@@ -64,148 +69,147 @@ Let's get started.
 
 [01:00]
 
-The problem this application is solving is a real one in higher education.
-University departments typically track their metrics in spreadsheets — shared
-Excel files, Google Sheets, sometimes just email threads. There is no single
-source of truth, no audit trail, and no way to quickly answer questions like
-"how did fall enrollment compare to last year?" or "what is our facilities
-budget utilization right now?"
+ASSERTION: Campus Analytics eliminates the university metrics data silo problem.
 
-[01:20]
+Here is what that means and the evidence that this project backs it up.
 
-The target users for Campus Analytics are faculty members, department heads,
-and university administrators — people who need a simple, secure interface to
-enter and review data, without needing to understand SQL or data warehouse
-tooling.
+[01:10]
+
+The problem is specific: university departments track campus metrics in
+spreadsheets. That creates three concrete failures. First, no single source of
+truth — departments work from different versions of the same file. Second, no
+audit trail — there is no record of who changed what, or when. Third, no access
+control — anyone with the file can view or modify any data.
+
+Those are not hypothetical concerns. They are the operational reality in most
+university administrative departments today.
 
 [01:35]
 
-The seven core features I implemented are:
+Here is who this affects. Faculty members need enrollment trends and academic
+performance KPIs in one place. Department heads need to monitor facilities and
+financial data with controlled access. And administrators need cross-domain
+oversight with an append-only audit trail that cannot be tampered with.
 
-One — secure user authentication with both username/password and Google OAuth,
-including a JWT bridge that ensures OAuth users can make API calls seamlessly.
+[01:50]
 
-Two — full CRUD operations on campus metrics, organized into five categories:
-enrollment, facilities, academic, financial, and a general "other" bucket.
-Values are displayed in proper US format — commas for thousands separators and
-dollar signs for monetary amounts.
+The evidence that this project addresses all of that: seven features, all fully
+implemented.
 
-Three — a live weather integration using Open-Meteo, showing current conditions
-at Penn State's coordinates in US measurements — temperature in Fahrenheit and
-wind speed in miles per hour.
+One — JWT plus Google OAuth authentication with bcrypt hashing and rate limiting.
 
-Four — a domain event system that writes an audit trail every time a metric
-is created or modified.
+Two — a five-category CRUD API for campus metrics with an admin master view that
+lets the superadmin account see all metrics across all users.
 
-Five — an admin master account that has visibility into all metrics across all
-users in the system — a full administrative view.
+Three — a live weather widget in Fahrenheit and miles per hour, sourced from
+Penn State's GPS coordinates.
 
-Six — Prometheus-compatible metrics scraping and a Grafana observability
-dashboard.
+Four — a domain event audit trail written on every metric create, update, and
+delete — append-only, never modified.
 
-And seven — a complete CI/CD pipeline that builds, tests, and packages the
-application automatically on every code push.
+Five — Prometheus plus Grafana observability with four metric families and a
+five-panel dashboard.
 
-[02:05]
+Six — a GitHub Actions CI/CD pipeline that runs automatically on every push.
 
-On the non-functional side, the three pillars I focused on were security —
-no hardcoded credentials, rate limiting on every route, JWT-based auth —
-observability — structured logging, health endpoints, and real-time metrics —
-and testing, with over 320 tests across unit, frontend component, and
-integration layers.
+And seven — a non-root Docker image with a three-stage multi-stage build.
+
+[02:20]
+
+The non-functional requirements are not aspirational. They are verified and
+implemented. Security: OWASP Top 10 mitigations applied. Reliability: SLOs
+defined at ninety-nine-point-five percent availability and p95 latency under
+five hundred milliseconds. Testing: three hundred twenty automated tests that
+block any broken build from reaching the Docker stage.
 
 [CLICK to next slide]
 
 
 ---SLIDE 3 — Architecture---
 
-[02:20]
+[02:35]
 
-Let me walk you through the architecture from top to bottom.
+ASSERTION: Next.js 15 collapses frontend and API into one deploy unit.
 
-At the top we have the presentation layer — a Next.js 15 application using the
-App Router. This handles both the server-side rendered pages that users see in
-the browser and all of the API routes that API clients or the CI pipeline's
-smoke test can call directly.
+The evidence is in the architecture.
 
-[02:40]
+[02:42]
 
-I chose Next.js specifically because it collapses two deployment concerns into
-one framework. Normally you would deploy a separate React frontend and a
-separate Node.js backend API. With Next.js, both live in the same codebase and
-deploy as a single Docker image. That simplifies the CI pipeline, reduces
-infrastructure cost, and eliminates the cross-origin complexity that comes with
-a split frontend-backend setup.
+Most web applications require two separate deployments: a React frontend and a
+Node.js backend API. That means two repositories, two Docker images, CORS
+configuration, and two scaling surfaces. With Next.js 15, both the React pages
+and all fifteen API route handlers live in the same codebase and deploy as a
+single Docker image. No CORS headers, no split infrastructure, no second server
+to provision.
 
-[03:00]
+[03:05]
 
-In the middle layer we have the business logic — all of it living in the lib/
-directory. That includes the authentication library, the structured logger, the
-Prometheus metrics module, validation, rate limiting, and the weather service.
+Looking at the architecture from top to bottom:
 
-At the bottom we have the data layer — SQLite managed through Sequelize as the
-ORM. I chose SQLite for this academic context because there are zero
-infrastructure dependencies: the database is a single file, it starts instantly,
-and it is perfectly adequate for the concurrency levels of a university
-department tool. I did document the migration path to PostgreSQL in the
-scalability section of my report.
+At the top, the presentation layer — Next.js 15 App Router with React 19 and
+TailwindCSS 4. Five server-side-rendered pages: Dashboard, Login, Metrics list,
+Metric create, and Metric edit.
 
-[03:30]
+In the middle, the API layer — fifteen route handlers on Node.js, all with JWT
+Bearer auth or NextAuth session fallback, four-tier in-memory rate limiting,
+and input validation with owner-based BOLA access control.
 
-The four data models are User, Metric, WeatherData, and DomainEvent. Users own
-metrics, weather records, and domain events — all with cascade deletes, so
-removing a user cleans up all their associated data automatically.
+At the bottom, the data layer — SQLite managed through Sequelize ORM. Four
+models: User, Metric, WeatherData, and DomainEvent, with cascade deletes to
+maintain referential integrity automatically.
 
 [03:45]
 
-The domain event model deserves a quick mention. Every time something
-significant happens in the application — a metric is created, an auth event
-fires — the system writes a DomainEvent record with an event type, the entity
-it affected, and the full payload. This gives us a complete, append-only audit
-trail without having to modify any of the core tables. It is the same pattern
-used in event-sourced systems at scale.
+Externally, Open-Meteo for free, keyless weather data, and optional Google
+OAuth through NextAuth. Zero secrets to manage for the weather integration.
 
-[04:05]
-
-For external integrations we have Open-Meteo — a free, no-API-key weather
-service — and optional Google OAuth through NextAuth for social login.
+The architecture diagram on the right of the slide shows all of this collapsing
+into a single deployable unit — that is the core architectural claim.
 
 [CLICK to next slide]
 
 
 ---SLIDE 4 — Technology Stack---
 
-[04:15]
+[04:00]
 
-Looking at the technology stack:
+ASSERTION: Every technology choice minimizes operational overhead and maximizes
+testability.
 
-The frontend is Next.js 15 with React 19 and TailwindCSS 4. The backend is
-Next.js API routes running on Node.js 18. The database is SQLite through
-Sequelize 6. Authentication is a combination of JSON Web Tokens and NextAuth.
+Each row in this table is the evidence.
 
-[04:30]
+[04:10]
 
-That authentication combination is worth one minute of explanation because it
-is a deliberate design decision, not an accident.
+The "Evidence" column for each technology explains not what the tool does, but
+why that specific choice produces the stated outcome.
 
-JWT handles API clients. When you call the API from a terminal, from Postman,
-or from the CI smoke test, you authenticate with a username and password, the
-server signs a JWT and hands it back, and from then on you pass that token in
-an Authorization Bearer header. Stateless, fast, and works with any HTTP client.
+Next.js: SSR and API in one deploy eliminates split architecture overhead. That
+is a direct causal claim — the evidence is the single-image Docker deployment.
 
-NextAuth handles browser sessions. When a user logs in through the web
-interface, NextAuth manages the encrypted session cookie. This lets us support
-optional Google OAuth social login on top of the email-and-password flow
-without writing that OAuth flow from scratch.
+TailwindCSS: utility-first styling removes custom CSS maintenance entirely.
+The evidence is that there are zero custom CSS files in this codebase.
 
-The two systems coexist because the getAuthUser function in lib/auth.js checks
-the Authorization header first, and falls through to the NextAuth session if no
-Bearer token is present. One code path, two authentication mechanisms.
+NextAuth plus JWT: browser sessions and API tokens are handled by one
+getAuthUser function. The evidence is that all fifteen route handlers call the
+same auth check regardless of which token type the client presents.
 
-[05:10]
+SQLite plus Sequelize: file-based database needs zero infrastructure. The
+evidence is that the application starts with no database server running —
+the file is created automatically on first sync.
 
-For testing, I used Jest 30 with React Testing Library for unit and frontend
-component tests, and Node's built-in test runner for integration tests.
+[04:50]
+
+Jest plus React Testing Library: three hundred twenty self-contained tests run
+in CI. The evidence is the GitHub Actions pipeline — if any test fails, the
+build stops before a Docker image is produced.
+
+Docker three-stage build: Alpine plus non-root user minimizes the attack
+surface. The evidence is in the Dockerfile — the runtime stage has no source
+code, no dev dependencies, and the process runs as UID 1001, not root.
+
+Prometheus plus Grafana: four metric families power SLO-aligned dashboards with
+zero external dependencies. The evidence is the zero-dependency lib/metrics.js
+implementation.
 
 [CLICK to next slide]
 
@@ -214,262 +218,306 @@ component tests, and Node's built-in test runner for integration tests.
 
 [05:20]
 
-Let me go a bit deeper on a few of the core features.
+ASSERTION: Multi-layer defense delivers seven production-grade campus features.
 
-Authentication uses multiple layers. The API layer uses JWT tokens with a
-one-hour expiration. The browser layer uses NextAuth sessions. Rate limiting
-is applied at the route level — the auth routes use a stricter limiter to
-slow down brute-force attempts, and the general API uses a more permissive
-limit for normal usage.
+The evidence is on both sides of this slide.
 
-[05:38]
+[05:28]
 
-For the metrics CRUD — every metric record has a name, a numeric value, a unit
-of measurement, an optional description, and a JSON metadata field for
-arbitrary extra context. Category is an enum constrained to those five values I
-mentioned: enrollment, facilities, academic, financial, and other. The list
-view supports pagination and category filtering, so a department head can
-quickly filter to see only their financial metrics, for example.
+On the security side:
 
-[05:58]
+The authentication system uses two token types but one code path. API clients
+send JWT Bearer tokens with a one-hour expiry. Browser users have NextAuth
+encrypted session cookies. Google OAuth users get a JWT automatically via the
+/api/auth/token bridge endpoint — so OAuth users can call every API endpoint
+without a token gap. A single getAuthUser function handles all three cases
+transparently. Route handlers are completely unaware of which auth mechanism
+the client used.
 
-The weather integration uses Open-Meteo, which requires no API key, so there
-are no secrets to manage for that feature. The dashboard widget is hardcoded to
-Penn State's latitude and longitude — 40.79 North, 77.86 West — which is
-actually a meaningful design choice: this is a Penn State application, so
-always showing Penn State weather makes sense. Results are cached in memory
-for ten minutes to avoid hammering the external API on every page load.
+[06:00]
 
-[06:20]
+Brute force is blocked at four layers. Rate limiting allows five authentication
+requests per fifteen-minute window per IP address. bcrypt with cost factor
+twelve means each hash check takes over two hundred milliseconds deliberately —
+that is a designed-in speed limit on password verification. Stolen tokens expire
+in one hour, limiting blast radius. Auth failures are logged with request
+metadata for forensic review.
 
-The domain event system runs asynchronously. When you create a metric, the API
-route fires an event — metric.created — and the event emitter writes a
-DomainEvent row to the database in the background. The API response does not
-wait for the event to be written; it returns the created metric immediately.
-This keeps response latency low while still building the audit trail.
+Five security headers ship on every response: HSTS, X-Frame-Options DENY, and
+X-Content-Type-Options nosniff. Owner-based BOLA checks verify that users can
+only modify their own records. And sensitive keys are stripped from all log
+output automatically — passwords, tokens, and authorization headers never appear
+in logs.
+
+[06:30]
+
+On the features side:
+
+Metrics CRUD validates input at both the server and client boundaries. Categories
+are a server-enforced enum — the API rejects anything outside the five allowed
+values. UUID primary keys prevent ID enumeration attacks. Admin accounts see all
+metrics across all users; regular users see only their own. Values display in US
+locale format: forty-seven thousand eight hundred ninety-two students, or
+two-point-one billion dollars USD.
+
+The weather widget fetches from Open-Meteo, caches the result for ten minutes,
+and serves Penn State coordinates in Fahrenheit and miles per hour. The
+ten-minute cache means repeated dashboard loads do not hammer the external API.
+
+And every data mutation produces an append-only domain event — metric.created,
+metric.updated, metric.deleted — written asynchronously so the API response
+time is not affected by the audit write.
 
 [CLICK to next slide]
 
 
 ---SLIDE 6 — DevOps and Observability---
 
-[06:35]
+[07:05]
 
-This is the section I spent the most time on in week six, and I think it is
-the most directly applicable to professional software engineering, so I want
-to give it the detail it deserves.
+ASSERTION: Every commit is automatically built, tested, and packaged. No manual
+steps.
 
-The CI/CD pipeline is defined in .github/workflows/ci.yml and triggers on
-every push and every pull request targeting the main branch.
+The evidence is the CI/CD pipeline definition.
 
-Job one is build-and-test. It checks out the code, sets up Node 18 with
-dependency caching for faster runs, installs with npm ci for a clean
-lockfile-reproducible install, builds the Next.js application, runs the full
-Jest test suite with coverage collection, uploads the coverage report as a
-workflow artifact retained for 14 days, and then runs npm audit to check for
-known high or critical CVEs.
+[07:14]
 
-[07:10]
+The pipeline is defined in .github/workflows/ci.yml and triggers on every push
+and every pull request targeting the main branch.
 
-The critical thing about the test step is that it has no continue-on-error
-flag. That means a single test failure kills the entire pipeline. Broken code
-cannot progress to the Docker build stage. That is the quality gate, and it is
-non-negotiable.
+Job one is build-and-test. Step one: npm ci, which produces a lockfile-exact
+reproducible install every time. Step two: npm run build, which compiles the
+Next.js standalone output. Step three: npm run test with coverage collection.
+This step has no continue-on-error flag. A single test failure kills the
+pipeline here — broken code cannot progress to the Docker build stage. That is
+the non-negotiable quality gate. Step four: npm audit, which rejects any
+dependency with a high or critical CVE. Step five: upload the coverage report
+as a workflow artifact retained for fourteen days.
 
-Job two is docker-build, and it only starts if job one passes. It builds the
-production Docker image, tags it with both the Git commit SHA — for traceability
-— and a human-friendly label. Then it runs a smoke test: start the container,
-wait 15 seconds, hit the health endpoint with curl, confirm a 200 response, and
-tear it down. If the app cannot survive that smoke test, the pipeline fails.
+[07:55]
 
-[07:40]
+Job two is docker-build, and it only starts if job one completes successfully.
+It builds the production image in three stages: a dependency install stage, a
+Next.js build stage, and a minimal Alpine runtime stage that copies only the
+compiled output — no source code, no test files, no node_modules in the final
+image. The runtime process runs as user nextjs with UID 1001, never as root.
+Then it runs a smoke test: start the container, retry curl /api/health up to
+five times, confirm a 200 response. If the application cannot pass its own
+health check inside the container, the pipeline fails.
 
-The Dockerfile is a three-stage multi-stage build. Stage one installs
-dependencies. Stage two builds the Next.js standalone output. Stage three copies
-only the compiled artifacts into a minimal Alpine image — so we are not shipping
-source code, node_modules, test files, or anything else that is not needed at
-runtime.
+[08:15]
 
-The most important security property of the Docker image is that the process
-runs as a non-root user — a dedicated system user named nextjs with UID 1001.
-If an attacker were to exploit a vulnerability in the application, they get
-a sandboxed non-root process. They cannot gain root access to the host through
-that container. That is a meaningful reduction in blast radius.
+On observability — the evidence for the three-layer claim:
 
-[08:00]
+Three health endpoints, each with a specific purpose. The main /api/health
+endpoint returns status, database state, uptime in seconds, timestamp, and
+version — always HTTP 200, even if the database is down, because load balancers
+use this to decide whether to route traffic, and a flapping database should not
+pull the app from the rotation. The /api/health/live endpoint is a Kubernetes
+liveness probe — always 200 while the Node.js process is alive. The
+/api/health/ready endpoint is a Kubernetes readiness probe — it returns 503 if
+the database is unreachable, which tells the orchestrator to stop routing
+traffic without restarting the container.
 
-On observability — I implemented three health endpoints with different purposes.
-The main /api/health endpoint returns the application status, database status,
-uptime in seconds, timestamp, and version number. It always returns HTTP 200
-even if the database is down, because a load balancer uses this endpoint to
-decide whether to route traffic, and you do not want a flapping database to
-cause the load balancer to remove the app from rotation when the app itself is
-still serving requests fine.
+Structured logging in lib/logger.js writes every log entry as a single JSON
+line with timestamp in ISO-8601 format, level, message, and metadata. All
+metadata is sanitized — any key named password, token, secret, or authorization
+is stripped before writing. This prevents accidental credential leakage into
+log files, and JSON format means cloud log aggregators can query fields directly.
 
-The /api/health/live endpoint is even simpler — it always returns 200 as long
-as the Node.js process is alive. Kubernetes uses this to decide whether to
-restart a container.
-
-The /api/health/ready endpoint returns 503 if the database is unreachable.
-Kubernetes uses this to decide whether to send traffic to a container. If the
-database is down, the app should not receive requests it cannot serve. So ready
-returns 503, but live still returns 200 — that tells the orchestrator "the
-process is fine, do not restart it, but do not route traffic to it until the
-database comes back."
-
-[08:30]
-
-Structured logging in lib/logger.js writes every log line as a single line of
-JSON with consistent fields: timestamp in ISO-8601 format, level, message, and
-any metadata you pass in. Metadata is automatically sanitized — any key named
-password, token, secret, or authorization is stripped before the log entry is
-written. That prevents accidental credential leakage into log files.
-
-JSON format matters because cloud log aggregators — CloudWatch, Stackdriver,
-Datadog — can parse JSON fields directly, letting you write queries like
-"show me all error logs for route /api/metrics in the last hour" without
-brittle regex parsing.
-
-The Prometheus metrics module in lib/metrics.js exposes four metric families:
-http_requests_total, which counts every request by method, route, and HTTP
-status code; http_request_duration_ms, a histogram of response times with
-buckets at 50, 100, 200, 500, 1000, and 2000 milliseconds; metrics_created_total,
-a domain-level counter that tells you how much data is being entered into the
-system; and auth_logins_total, broken down by success or failure.
-
-The Grafana dashboard has five panels built on top of those metrics:
-HTTP request rate over time, HTTP error rate for 4xx and 5xx responses,
-request duration at the 95th percentile, total metrics created as a big-number
-stat, and total successful logins. During an incident — say a bad deploy
-causes a spike in 5xx errors — panels two and three light up together, and
-you can drill into the route-level labels to identify which endpoint is the
-source in seconds.
+The Prometheus module in lib/metrics.js exposes four metric families. The
+Grafana dashboard has five panels built on top of those metrics, auto-provisioned
+on docker-compose up. The SLOs are availability at ninety-nine-point-five percent
+and p95 latency at or below five hundred milliseconds.
 
 [CLICK to next slide]
 
 
 ---SLIDE 7 — AI/GenAI Audit---
 
-[09:00]
+[08:40]
 
-I used AI assistance to draft the initial CI/CD YAML configuration, and the
-audit of that draft surfaced three significant issues that required correction
-before it was safe to commit.
+ASSERTION: AI-generated code had three security flaws — all caught by manual
+review.
 
-Issue one: the AI hard-coded secret values directly into the YAML file —
-things like JWT_SECRET equals supersecret123. Hard-coded secrets in version
-control are visible to anyone with repository access, cannot be rotated without
-a code change, and get flagged immediately by GitHub's secret scanning. The
-fix was to reference GitHub Actions repository secrets using the
-secrets context — with a safe placeholder fallback for CI environments where
-the secrets have not been configured yet.
+The evidence is the audit findings, with specific inputs, specific risks, and
+specific fixes.
 
-[09:28]
+[08:50]
 
-Issue two: the AI added continue-on-error true to the test step. That is the
-single worst thing you can do to a CI pipeline — it means tests failing produces
-a green pipeline. The whole point of CI is to reject broken code automatically.
-The fix was to remove that flag entirely from the test step. The security audit
-step intentionally keeps continue-on-error true, because vulnerability state
-is managed externally and should not block legitimate development.
+Five technical challenges are listed on the left side of this slide. Let me
+call out the two that surfaced in Week 7 QA because they illustrate an
+important point about end-to-end testing.
 
-[09:50]
+Challenge three: sync with alter true silently wiped all data. Sequelize's
+sync alter option drops and recreates tables when it detects a schema difference.
+On SQLite, that happens on ENUM columns. The consequence: every Next.js dev
+server restart called ensureDb, which called sync alter true, which dropped the
+Metrics table and recreated it empty. Twenty seed records became zero records
+silently, on every restart. All unit tests passed throughout — this bug only
+surfaced when running the actual application. The fix was a one-word change:
+sync without alter only creates missing tables, never drops existing ones.
 
-Issue three: the AI-generated Dockerfile did not include a USER directive,
-meaning the container process would run as root. If any dependency in the
-application had a remote code execution vulnerability, an attacker would land
-in the container with root privileges. The fix was adding the non-root user
-creation and the USER directive before the CMD instruction.
+Challenge four: middleware secret mismatch caused a redirect loop for every
+authenticated user. middleware.js was reading process.env.NEXTAUTH_SECRET with
+no fallback. The NextAuth handler had a three-level fallback chain. With no
+.env.local file present, the middleware got undefined as its verification secret,
+so getToken returned null on every request, and every page redirected to login.
+The fix was aligning the fallback chains and creating the .env.local file.
 
-[10:08]
+[09:30]
 
-The lesson I take from this audit is that AI tools are drafting tools. They
-optimize for producing working code, not for applying security defaults. An
-engineer reviewing AI-generated DevOps configurations has to actively apply a
-security-first mindset, because the AI will not do that for you by default.
-Treat AI output as a first draft, not production-ready output.
+Now for the AI audit — the core assertion.
+
+I used AI assistance to draft the initial CI/CD YAML configuration. The audit
+of that draft found three security vulnerabilities.
+
+Flaw one: the AI hard-coded secret values directly into the YAML.
+JWT_SECRET equals supersecret123. Hard-coded credentials in version control are
+permanently visible to anyone with repository access, appear in git history even
+after deletion, and are flagged by GitHub's secret scanning. The fix was
+referencing GitHub Actions repository secrets with a safe placeholder fallback.
+
+Flaw two: the AI added continue-on-error true to the test step. That means
+failing tests produce a green pipeline. The entire point of CI is to reject
+broken code automatically. The fix was removing that flag. The test step now
+fails the pipeline on any test failure.
+
+Flaw three: the AI-generated Dockerfile had no USER directive, so the container
+process would run as root. If any npm dependency had a remote code execution
+vulnerability, the attacker would land as root inside the container. The fix was
+adding a non-root system user and USER directive before the CMD instruction.
+
+[10:15]
+
+The lesson: AI tools optimize for producing working code, not for applying
+security defaults. Every AI-generated DevOps artifact needs a security-first
+manual review before it is committed. Treat AI output as a first draft, not
+as production-ready code.
 
 [CLICK to next slide]
 
 
 ---SLIDE 8 — Testing---
 
-[10:20]
+[10:28]
 
-The testing strategy has three layers.
+ASSERTION: Three hundred twenty tests across three isolation layers form a
+quality gate at every stage of the CI pipeline.
 
-Unit tests in __tests__/unit/ cover the individual library modules in isolation:
-authentication logic, the event emitter, API middleware, rate limiting,
-input validation, and the weather service. These run fast, they have no
-external dependencies, and they run on every CI build.
+The evidence is the three-column breakdown.
 
-Frontend component tests in __tests__/frontend/ use React Testing Library to
-test the UI components in a jsdom environment — things like the login form,
-the metric creation form, and the dashboard layout — verifying they render
-correctly, display validation errors, and respond to user interactions.
+[10:38]
 
-Integration tests in __tests__/api.test.js use Node's built-in test runner to
-make real HTTP calls against a running server on port 3001. These tests verify
-the full request-response cycle end to end. They are not run in CI because they
-require a running server, but they are documented and runnable locally.
+Layer one — unit tests. One hundred ninety-six test cases across seven files.
+These test the individual library modules in complete isolation: authentication
+logic, input validation, rate limiter, domain event emitter, API error classes,
+weather service caching, and middleware security headers. No external
+dependencies, no database, no HTTP calls. They run in milliseconds and they run
+on every CI build.
 
-[11:00]
+Layer two — frontend component tests. One hundred twenty-four test cases across
+seven files. These use React Testing Library in a jsdom environment — no browser
+required. They verify that the login form submits correctly and shows validation
+errors, that the metric form handles both create and edit modes, that the navbar
+renders auth-aware links, that the weather widget transitions through loading,
+success, and error states, and that the API client injects the JWT Bearer header
+on every request and handles 401 responses by redirecting to login.
 
-Across all three layers, the test suite has 320 tests across 15 test files.
-Jest runs automatically in GitHub Actions on every push to main. If any test
-fails, the entire pipeline stops before a Docker image is built.
+Layer three — integration tests. One test file, api.test.js, using Node's
+built-in test runner to make real HTTP calls against a running server on port
+3001. These tests verify the complete request-response cycle end to end:
+register a user, log in, create a metric, read it, update it, delete it, fetch
+weather data, confirm domain events were written. These are not run in CI because
+they require a running server, but they are fully documented and runnable locally.
+
+[11:18]
+
+The CI quality gate: Jest runs on every push to main. If any of the three
+hundred twenty tests fails, the pipeline stops. The Docker build stage never
+starts. A coverage report is uploaded as a workflow artifact and retained for
+fourteen days. The evidence that the gate works: the GitHub Actions history
+shows green only when all tests pass.
 
 [CLICK to next slide]
 
 
 ---SLIDE 9 — Reflections---
 
-[11:12]
+[11:30]
 
-Two things I am most proud of in this project.
+ASSERTION: Observability must be designed in — not bolted on.
 
-First, the zero-dependency Prometheus metrics implementation. lib/metrics.js
-is about 170 lines of pure JavaScript with no npm dependencies at all. It
-implements a global singleton that survives Next.js hot reloads in development,
-exposes correct Prometheus text-format output, and supports counter and
-histogram types with labeled time series. Writing that from scratch gave me a
-much deeper understanding of how Prometheus actually works than using a client
-library would have.
+The evidence comes from what this project required to get right.
 
-Second, the multi-layer authentication. Getting JWT and NextAuth to coexist
-cleanly — where API clients and browser sessions use the same underlying auth
-check — required careful design of the getAuthUser function. The fact that it
-is completely transparent to the route handlers is something I think is
-genuinely well-designed.
+[11:38]
 
-[11:42]
+The first evidence column is what was built from scratch — not with a library,
+from scratch. lib/metrics.js is one hundred seventy lines of pure Node.js,
+no npm dependencies, implementing correct Prometheus text-format 0.0.4 output
+with a global singleton pattern that survives Next.js hot reloads. I understand
+how Prometheus actually works because I wrote the counter, histogram, and label
+logic myself. Using prom-client would have hidden all of that.
 
-The biggest lesson from this project: observability cannot be bolted on after
-the fact. Structured logging, health endpoints, and metrics instrumentation all
-needed to be designed into the application architecture from the beginning.
-If I had tried to add them at the end, I would have been touching every single
-route handler. By designing lib/logger.js and lib/metrics.js as shared modules
-from the start, adding instrumentation to new routes takes two or three lines.
+The OAuth JWT bridge and the single getAuthUser function are also in this
+category. Two authentication mechanisms, one code path — completely transparent
+to the fifteen route handlers that use it.
 
-These patterns — CI/CD pipelines, structured logging, health checks, Prometheus
-scraping — appear in every production software system I am likely to work on
-in my career. This project gave me real, hands-on practice with each of them.
+And the Week 7 QA work matters here: both infrastructure bugs — the data wipe
+and the auth redirect loop — required systematic root-cause analysis to find.
+They were not obvious. They required end-to-end testing to surface.
+
+[12:10]
+
+The four lessons in the middle column transfer directly to production systems.
+
+Structure logging before you ever need it. The shared lib/logger.js module made
+per-route instrumentation a two-line addition. Adding it after the fact would
+have required touching every route handler.
+
+Observability cannot be retrofitted. Designing the metrics and logging modules
+as shared infrastructure from day one kept instrumentation additive. Had I tried
+to bolt it on at the end, it would have been a refactor, not a feature.
+
+AI is a drafting tool, not a security reviewer. Three security flaws in CI YAML,
+two infrastructure bugs in QA. Security review of AI output is not optional.
+
+And end-to-end QA surfaces what unit tests miss. All three hundred twenty unit
+and component tests passed throughout development. The runtime failures only
+emerged when testing the actual running application.
+
+[12:42]
+
+Looking at the future work column: the identified bottlenecks at scale are
+specific. SQLite write-locks under concurrent writes — the fix is PostgreSQL
+with connection pooling. In-memory rate limiter state is lost on pod restart —
+the fix is Redis. Single-instance deployment does not auto-scale — the fix is
+Kubernetes with HPA.
+
+[12:58]
+
+Career connection: CI/CD pipelines, structured JSON logging, health endpoints,
+Prometheus scraping, and multi-layer auth patterns appear in every production
+software system. The specific tools vary — GitHub Actions versus Jenkins,
+Prometheus versus Datadog, Next.js versus something else entirely — but the
+patterns are universal. This project gave me a real, working implementation of
+all of them, not just conceptual familiarity.
 
 [CLICK: switch to live demo tab / terminal]
 
 
 ================================================================================
   SECTION 3: LIVE DEMO
-  Target: ~3.5 minutes  [08:30 – 12:00]
+  Target: ~3.5 minutes  [12:58 – end or separate recording]
 ================================================================================
 
-[NOTE: The demo section timestamps below continue from the presentation.
-       Adjust if your slides took more or less than estimated.]
+[NOTE: The demo section can follow immediately or be a separate recording.
+       Adjust timestamps based on your actual slide timing above.]
 
-[00:00 demo / ~08:30 total]
+[DEMO 00:00]
 
-Alright, let me switch over to the live demo. I have a terminal and a browser
-open. Let me first get the full stack running.
+Alright, let me switch to the live demo. I have a terminal and browser open.
+Let me get the full stack running.
 
 
 --- DEMO STEP 1: Start the Application ---
@@ -478,276 +526,239 @@ open. Let me first get the full stack running.
 
 [TYPE: docker-compose up -d]
 
-[00:08:50]
+[DEMO 00:08]
 
-What this command does is start three services simultaneously: the Campus
-Analytics Next.js application on port 3000, a Prometheus instance on port 9090
-configured to scrape our app's metrics endpoint every 15 seconds, and a Grafana
-instance on port 4000 with the Campus Analytics dashboard pre-provisioned.
-All of this comes up with a single command. Give it a moment to initialize.
+What this command does: it starts three services simultaneously. The Campus
+Analytics Next.js application on port 3000. A Prometheus instance on port 9090
+configured to scrape our metrics endpoint every fifteen seconds. And a Grafana
+instance on port 4000 with the Campus Analytics dashboard pre-provisioned. One
+command brings up the entire observability stack. Give it a moment to initialize.
 
 
---- DEMO STEP 2: Health Check ---
+--- DEMO STEP 2: Health Check — Evidence That the Pipeline's Smoke Test Works ---
 
-[00:09:00]
+[DEMO 00:20]
 
-While that is starting, let me show you the health endpoint directly from the
-terminal.
+While that starts, let me demonstrate the same health check that the CI pipeline
+runs automatically after every Docker build.
 
 [TYPE: curl http://localhost:3000/api/health | python3 -m json.tool]
 
-[Wait for response, then read it aloud:]
+[Wait for response — read it aloud:]
 
-You can see the response: status is UP, db is UP, uptime shows how many seconds
-the process has been running, timestamp in ISO-8601 format, and version 1.0.0.
-
-This is exactly what the CI pipeline's smoke test checks after building the
-Docker image. If any of those fields showed an error state, the smoke test
-would fail and the pipeline would stop before marking the build as successful.
+The assertion is that this endpoint always returns a 200 with structured health
+data. The evidence you can see: status is UP, db is UP, uptime shows seconds
+since process start, timestamp in ISO-8601 format, and version 1.0.0. This is
+exactly what the CI smoke test verifies before marking a build as successful.
 
 
---- DEMO STEP 3: Register and Login ---
+--- DEMO STEP 3: Login — Evidence That the Auth System Works ---
 
-[00:09:20]
+[DEMO 00:40]
 
 [OPEN browser: http://localhost:3000]
 
-Now let me open the application in the browser. Here is the landing page.
-Let me navigate to login.
+[CLICK: Login page]
 
-[CLICK: Login / Sign In page]
+The assertion for this step: the auth system supports both credential login and
+Google OAuth, and both result in a usable JWT for API calls.
 
-Here is the login form. I will log in as the superadmin master account —
-username superadmin, password Campus123 exclamation point. This account was
-created by the seed script that ships with the project.
+I will log in as the superadmin master account. This account was created by
+the seed script that ships with the project.
 
-[TYPE: superadmin in the username field]
-[TYPE: Campus123! in the password field]
+[TYPE: superadmin in username field]
+[TYPE: Campus123! in password field]
 [CLICK: Sign In]
 
-After a successful login, the server signs a JWT — which is valid for one hour
-— and NextAuth sets the session cookie. The application then redirects to the
-dashboard. Notice the "Admin" badge next to the username in the navigation bar,
-confirming this is an elevated account.
+After a successful login, the server signs a JWT valid for one hour, and
+NextAuth sets the session cookie. Notice the Admin badge next to the username
+in the navigation bar — that confirms this account has the admin role.
 
-[SHOW: dashboard after redirect, with "superadmin Admin" visible in navbar]
+[SHOW: dashboard with "superadmin Admin" visible in the navbar]
 
-Here we are at the dashboard. You can see the navigation bar showing superadmin
-with the Admin badge, the weather widget in the corner, and the quick links to
-metrics and weather data.
+Here is the dashboard. Navigation bar confirms the admin identity. Weather
+widget is in the corner. Quick links to Metrics and Weather data are present.
 
 
---- DEMO STEP 4: View the Pre-Seeded Metrics ---
+--- DEMO STEP 4: Metrics List — Evidence That Admin Sees All Metrics ---
 
-[00:09:50]
+[DEMO 01:10]
 
-Because I am logged in as the superadmin account, the metrics list will show all
-metrics in the system — not just the ones this user created. This is the master
-admin view.
+The assertion for the metrics view: the admin master account sees all metrics
+in the system, not just its own.
 
 [CLICK: Metrics in the navigation]
 
 [SHOW: metrics list with 20 pre-seeded rows]
 
-Here you can see the 20 pre-seeded campus metrics. Look at the value column —
-notice how numbers are formatted with thousands separators. "47,892 students"
-for total enrollment. And in the financial category, you will see dollar amounts
-like "$2,100,000,000 USD" for the annual operating budget. That is proper US
-locale formatting, not raw database numbers.
+Here are the twenty pre-seeded campus metrics. Look at the value column — this
+is the evidence for the US formatting claim: "47,892 students" for total
+enrollment, not 47892. And in the financial category, "$2,100,000,000 USD"
+for the annual operating budget — dollar prefix, comma separators, USD suffix.
 
-Now let me also create a new metric to show the CRUD flow.
+Now let me create one new metric to show the full CRUD flow.
 
 [CLICK: Create Metric button]
 
-[TYPE in Name field: Spring 2026 Research Activity]
-
+[TYPE in Name: Spring 2026 Research Activity]
 [SELECT Category: academic]
-
-[TYPE in Value field: 425]
-
-[TYPE in Unit field: active projects]
-
+[TYPE in Value: 425]
+[TYPE in Unit: active projects]
 [CLICK: Create Metric]
 
-[00:10:15]
+[DEMO 01:40]
 
-The form submits to POST /api/metrics. The route validates the input, creates
-the database record, fires the domain event in the background, increments the
-Prometheus metrics_created_total counter, writes a structured log line, and
-returns the created metric.
+That POST request validates the input, writes the database record, fires the
+domain event asynchronously, increments the Prometheus metrics_created_total
+counter, writes a structured JSON log line, and returns the created metric.
 
-[SHOW: success message and redirect to metrics list with new metric at top]
+[SHOW: success message and redirect to metrics list]
 
 There it is — "Spring 2026 Research Activity — 425 active projects — academic."
 
+Let me also show the category filter.
 
---- DEMO STEP 5: Metrics List and Filtering ---
+[CLICK: enrollment filter button]
 
-[00:10:20]
-
-[SHOW: metrics list page]
-
-The metrics list supports pagination and category filtering. Let me click on the
-enrollment category filter.
-
-[CLICK: enrollment filter]
-
-You can see it filters down to only enrollment metrics. Each category has a
-color-coded badge so you can scan the list quickly. This is backed by a query
-parameter on GET /api/metrics?category=enrollment, and the API validates that
-the category value is one of the five allowed enum values before applying it
-to the database query.
+The list filters to enrollment metrics only. This is backed by
+GET /api/metrics?category=enrollment — the API validates the category value
+against the enum before applying it to the database query.
 
 
---- DEMO STEP 6: Weather Widget ---
+--- DEMO STEP 5: Weather Widget — Evidence of US Unit Conversion ---
 
-[00:10:45]
+[DEMO 02:10]
 
 [CLICK: back to Dashboard]
 
-Let me go back to the dashboard and point out the weather widget.
-
 [SHOW: weather widget]
 
-This widget is pulling live data from Open-Meteo for Penn State's coordinates.
-Notice the measurements are in US units — temperature in Fahrenheit, wind speed
-in miles per hour. The current temperature, humidity, wind speed, and a
-human-readable weather description — things like "partly cloudy" or "light rain"
-— are fetched when the page loads. The result is cached in memory for ten minutes,
-so repeated dashboard loads do not make redundant API calls to the external service.
+The assertion: the weather widget displays Penn State conditions in US units.
+The evidence: temperature in Fahrenheit, wind speed in miles per hour.
+The Open-Meteo API returns Celsius and km/h — the widget converts both before
+display. The result is cached for ten minutes, so repeated page loads do not
+trigger redundant external API calls.
 
 
---- DEMO STEP 7: Prometheus Metrics ---
+--- DEMO STEP 6: Prometheus — Evidence That Metrics Are Instrumented ---
 
-[00:11:10]
+[DEMO 02:30]
 
 [OPEN new browser tab: http://localhost:9090]
 
-Now let me switch over to Prometheus. Prometheus has been scraping our
-application at /api/prometheus every 15 seconds since the stack came up.
+Prometheus has been scraping our application every fifteen seconds since startup.
 
-[CLICK: Graph tab or expression input]
+[CLICK: Graph tab → expression field]
 
-[TYPE in expression field: http_requests_total]
-
+[TYPE: http_requests_total]
 [CLICK: Execute]
 
-[SHOW: results table or graph]
+The assertion: every API call is instrumented. The evidence: the counter broken
+down by method, route, and status code shows every request made during this demo.
 
-You can see the http_requests_total counter broken down by labels: method,
-route, and status code. Every API call we made during the demo has been
-recorded here. This is the raw telemetry data that Grafana visualizes.
-
-[CLEAR expression field]
-
+[CLEAR expression]
 [TYPE: metrics_created_total]
-
 [CLICK: Execute]
 
-And here is the domain-level counter — metrics_created_total. That number
-went up when I created the enrollment metric a moment ago.
+This counter incremented when the enrollment metric was created a moment ago.
+That is the domain KPI — it measures how much data is actually being entered
+into the system.
 
 
---- DEMO STEP 8: Grafana Dashboard ---
+--- DEMO STEP 7: Grafana Dashboard — Evidence That Observability Works End-to-End ---
 
-[00:11:35]
+[DEMO 02:55]
 
 [OPEN new browser tab: http://localhost:4000]
 
-Now the Grafana dashboard. The credentials are admin and campus123 — they are
-automatically configured by the docker-compose file.
+[LOGIN: admin / campus123]
 
-[CLICK: Login with admin / campus123]
+[NAVIGATE: Dashboards → Campus Analytics - Observability]
 
-[NAVIGATE: Dashboards -> Campus Analytics - Observability]
+[SHOW: all 5 panels]
 
-[SHOW: dashboard with all 5 panels]
+The assertion: the Grafana dashboard turns raw Prometheus metrics into actionable
+operational signal. Five panels, each proving a piece of that.
 
-[00:11:50]
+Panel one: HTTP Request Rate — requests per second by route. You can see the
+spike from the demo activity.
 
-Here is the full dashboard. Let me walk through each panel.
+Panel two: HTTP Error Rate — 4xx and 5xx responses. Flat near zero. That is
+the correct state.
 
-Panel one — HTTP Request Rate — is a time series showing requests per second
-by route. You can see the spike from the demo activity we just did.
+Panel three: Request Duration p95 — 95th-percentile response time in
+milliseconds by route. This is the latency SLO metric. The SLO is 500ms.
 
-Panel two — HTTP Error Rate — shows 4xx and 5xx responses over time. Right now
-it is flat and near zero, which is what we want.
+Panel four: Metrics Created — total count of records created. Reflects the
+metric we just added.
 
-Panel three — Request Duration p95 — shows the 95th percentile response time
-in milliseconds by route. This is our latency SLO metric. Our target is that
-p95 stays below 500 milliseconds.
+Panel five: Successful Logins — total successful auth events since startup.
 
-Panel four — Metrics Created — is a big-number stat showing the total count
-of metric records ever created. You can see it reflects the record we just
-added.
+[DEMO 03:30]
 
-Panel five — Successful Logins — is another stat showing total successful
-authentication events.
-
-[00:12:15]
-
-The way you would use this during an incident: imagine a deploy has gone out
-and users start reporting slowness. You open Grafana. Panel three shows p95
-latency climbing above 500 ms. Panel two shows a correlated spike in 5xx
-responses. You look at the route-level breakdown in panel one to identify
-that the spike is coming from POST /api/metrics specifically. You roll back
-the deploy. You confirm on the dashboard that latency and error rates return
-to baseline. Incident resolved.
-
-That is what production observability looks like, and this project gave me
-a working implementation of it.
+How you use this in an incident: a bad deploy causes 5xx spike. Panel two
+lights up. Panel three shows p95 climbing past the 500ms SLO. Panel one shows
+the spike concentrated on one route. You identify the source, roll back the
+deploy, and confirm on the dashboard that both metrics return to baseline. That
+is production observability in practice.
 
 
 ================================================================================
   SECTION 4: WRAP-UP
-  Target: ~1 minute  [12:15 – 13:00]
+  Target: ~1 minute  [demo end – recording end]
 ================================================================================
-
-[00:12:20]
 
 [RETURN to slides or face camera]
 
-Let me close out with a few reflections.
+Let me close with the core assertion from this project.
 
-The hardest single problem in this project — and one I found during Week 7 QA —
-was a data persistence bug. The `ensureDb()` function was calling Sequelize's
-`sync({ alter: true })` which, on SQLite, silently drops and recreates tables
-with ENUM columns on every server restart, wiping all seeded data. The fix was
-a one-word change: `sync()` without alter. That is the kind of subtle
-infrastructure bug that only surfaces during end-to-end testing.
+The hardest problems were not the features. The hardest problems were
+infrastructure bugs that unit tests could not catch. The sync alter true data
+wipe was a one-word fix — sync() instead of sync with alter — but finding it
+required end-to-end testing and root-cause analysis. The middleware secret
+mismatch was a three-level fallback alignment — but finding it required tracing
+the full authentication flow from request to token verification.
 
-The second hardest problem was a secret alignment bug: the middleware was using
-`process.env.NEXTAUTH_SECRET` with no fallback, while the NextAuth handler had
-a three-level fallback chain. With no `.env.local` file present, the middleware
-always got `undefined` as its secret, causing `getToken()` to return null on
-every request — which meant the app redirected every authenticated user back to
-the login page. The fix was aligning the fallback chains.
-
-[00:12:48]
+Those two experiences are the best evidence for the final assertion:
+observability must be designed in from day one. If I had not had structured
+logging and health endpoints, diagnosing either of those bugs would have taken
+much longer.
 
 What I am most proud of: the zero-dependency Prometheus implementation, the
-comprehensive 320-test suite, and the fact that when real QA bugs surfaced in
-Week 7, I had the tooling and codebase structure to find and fix them quickly.
+comprehensive 320-test suite, and the fact that when real infrastructure bugs
+surfaced in Week 7, the tooling and codebase structure made them findable and
+fixable quickly.
 
-[00:12:58]
+How this connects to future work: every production system I am likely to work
+on will have CI/CD pipelines, structured logging, health checks, and metrics
+dashboards. The tools will vary. The patterns are universal. This project gave
+me a real, working implementation of all of them.
 
-How this connects to my future work: every production system I am going to
-encounter in my career is going to have CI/CD pipelines, structured logging,
-health checks, and metrics dashboards. The specific tools will vary — GitHub
-Actions versus Jenkins, Prometheus versus Datadog, Next.js versus something
-else entirely — but the patterns are universal. This project gave me a real
-implementation of all of them, not just conceptual familiarity.
-
-[00:13:20]
-
-Thank you for watching. I am happy to answer any questions.
+Thank you for watching.
 
 ================================================================================
   END OF SCRIPT
 ================================================================================
 
 TOTAL ESTIMATED RUNTIME: ~13 minutes at normal speaking pace.
-To trim to 12 minutes: reduce the DevOps slide section by 30 seconds
-by abbreviating the Grafana panel walkthrough (panels 4 and 5 can be
-mentioned briefly rather than described individually).
+
+TIMING GUIDE:
+  Introduction:       ~1:00  [00:00–01:00]
+  Slide 2 (Req):      ~1:35  [01:00–02:35]
+  Slide 3 (Arch):     ~1:25  [02:35–04:00]
+  Slide 4 (Stack):    ~1:20  [04:00–05:20]
+  Slide 5 (Features): ~1:45  [05:20–07:05]
+  Slide 6 (DevOps):   ~1:35  [07:05–08:40]
+  Slide 7 (AI Audit): ~1:35  [08:40–10:15]
+  Slide 8 (Testing):  ~1:15  [10:15–11:30]
+  Slide 9 (Reflect):  ~1:28  [11:30–12:58]
+  Live Demo:          ~3:30  [separate or appended]
+  Wrap-up:            ~1:00
+  ─────────────────────────────────
+  Total (no demo):    ~11:43
+  Total (with demo):  ~15:13 (trim demo to 2 min for a 13-min target)
+
+TO TRIM TO 12 MINUTES:
+  Reduce the demo to 2 minutes by skipping Prometheus and just showing Grafana.
+  Cut the metric creation flow; just show the pre-seeded list and filter.
 ================================================================================
