@@ -298,44 +298,11 @@ def build_slide3(prs):
     ]
     multiline_box(slide, left, Inches(0.3), Inches(1.2), Inches(5.5), Inches(6.1))
 
-    # ── RIGHT: architecture diagram ────────────────────────────────────────
-    diagram = (
-        "┌──────────────────────────────────┐\n"
-        "│  Browser (React 19 + Next.js 15) │\n"
-        "│  Dashboard │ Login │ Metrics      │\n"
-        "│  Weather Widget │ Forms           │\n"
-        "└─────────────────┬────────────────┘\n"
-        "                  │ HTTPS / JWT\n"
-        "┌─────────────────▼────────────────┐\n"
-        "│  Next.js API Routes (Node.js)    │\n"
-        "│  Auth │ Rate Limit │ Validation  │\n"
-        "│  15 route handlers               │\n"
-        "└──────┬──────────────────┬────────┘\n"
-        "       │                  │\n"
-        "┌──────▼──────┐  ┌────────▼───────┐\n"
-        "│  SQLite DB   │  │ Open-Meteo API │\n"
-        "│  Sequelize   │  │ (cached 10min) │\n"
-        "│  4 models    │  └────────────────┘\n"
-        "└──────┬──────┘\n"
-        "       │\n"
-        "┌──────▼──────────────────────────┐\n"
-        "│  DevOps Layer                   │\n"
-        "│  Docker │ GitHub Actions        │\n"
-        "│  Prometheus │ Grafana           │\n"
-        "└─────────────────────────────────┘"
-    )
-
-    tb = slide.shapes.add_textbox(Inches(6.1), Inches(1.2), Inches(6.9), Inches(6.1))
-    tf = tb.text_frame
-    tf.word_wrap = False
-    tb.fill.solid()
-    tb.fill.fore_color.rgb = MONO_BG
-    p = tf.paragraphs[0]
-    run = p.add_run()
-    run.text = diagram
-    run.font.size = Pt(9.5)
-    run.font.name = "Courier New"
-    run.font.color.rgb = DGRAY
+    # ── RIGHT: architecture diagram (PNG) ────────────────────────────────
+    arch_png = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "diagrams", "architecture.png")
+    slide.shapes.add_picture(arch_png, Inches(5.8), Inches(1.2),
+                             Inches(7.2), Inches(6.1))
     return slide
 
 
@@ -451,41 +418,14 @@ def build_slide6(prs):
     slide_header(slide,
         "Every Commit Is Automatically Built, Tested, and Packaged — No Manual Steps")
 
-    # ── LEFT: pipeline as ASCII flow ───────────────────────────────────────
+    # ── LEFT: pipeline diagram (PNG) ───────────────────────────────────────
     section_label(slide, "CI/CD Pipeline  (triggers on every push / PR to main)",
                   Inches(0.3), Inches(1.15), Inches(6.1))
 
-    pipeline = (
-        "push / PR to main\n"
-        "       │\n"
-        "  ┌────▼────────────────────────────┐\n"
-        "  │  JOB 1 — build-and-test         │\n"
-        "  │  npm ci  (lockfile-exact)        │\n"
-        "  │  npm run build                   │\n"
-        "  │  npm run test:coverage  ◄────────┼── QUALITY GATE\n"
-        "  │    no continue-on-error          │   failure stops here\n"
-        "  │  npm audit --audit-level=high    │\n"
-        "  └────┬────────────────────────────┘\n"
-        "       │  only if JOB 1 passes\n"
-        "  ┌────▼────────────────────────────┐\n"
-        "  │  JOB 2 — docker-build           │\n"
-        "  │  3-stage build (Alpine)          │\n"
-        "  │  non-root user nextjs:1001       │\n"
-        "  │  smoke test: curl /api/health×5  │\n"
-        "  └─────────────────────────────────┘"
-    )
-
-    tb = slide.shapes.add_textbox(Inches(0.3), Inches(1.52), Inches(6.1), Inches(5.8))
-    tf = tb.text_frame
-    tf.word_wrap = False
-    tb.fill.solid()
-    tb.fill.fore_color.rgb = MONO_BG
-    p = tf.paragraphs[0]
-    r = p.add_run()
-    r.text = pipeline
-    r.font.size = Pt(10)
-    r.font.name = "Courier New"
-    r.font.color.rgb = DGRAY
+    pipeline_png = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "diagrams", "pipeline.png")
+    slide.shapes.add_picture(pipeline_png, Inches(0.3), Inches(1.52),
+                             Inches(6.1), Inches(5.8))
 
     divider(slide, Inches(6.55))
 
@@ -649,13 +589,20 @@ def build_slide8(prs):
         ],
     ]
 
+    layers_png = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "diagrams", "test-layers.png")
+
     for i, (title, col_data) in enumerate(zip(titles, columns)):
         left = Inches(0.2) + i * (col_w + gap)
         section_label(slide, title, left, Inches(1.15), col_w)
-        multiline_box(slide, col_data, left, Inches(1.52), col_w, Inches(5.85))
         if i < 2:
+            multiline_box(slide, col_data, left, Inches(1.52), col_w, Inches(5.85))
             rect(slide, left + col_w + Inches(0.05),
                  Inches(1.1), Inches(0.04), Inches(6.3), STEEL)
+        else:
+            # Third column: test-layers diagram
+            slide.shapes.add_picture(layers_png, left, Inches(1.52),
+                                     col_w, Inches(5.85))
     return slide
 
 

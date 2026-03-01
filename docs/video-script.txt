@@ -278,32 +278,28 @@ time is not affected by the audit write.
 ASSERTION: Every commit is automatically built, tested, and packaged. No manual
 steps.
 
-The evidence is the CI/CD pipeline definition.
+The evidence is the CI/CD pipeline diagram on the left side of this slide.
 
 [07:14]
 
-The pipeline is defined in .github/workflows/ci.yml and triggers on every push
-and every pull request targeting the main branch.
+The pipeline, shown as an activity flow, is defined in .github/workflows/ci.yml
+and triggers on every push and every pull request targeting the main branch.
 
-Job one is build-and-test. Step one: npm ci, which produces a lockfile-exact
-reproducible install every time. Step two: npm run build, which compiles the
-Next.js standalone output. Step three: npm run test with coverage collection.
-This step has no continue-on-error flag. A single test failure kills the
-pipeline here — broken code cannot progress to the Docker build stage. That is
-the non-negotiable quality gate. Step four: npm audit, which rejects any
-dependency with a high or critical CVE. Step five: upload the coverage report
-as a workflow artifact retained for fourteen days.
+Job one — build-and-test — runs four steps in sequence. First, npm ci for a
+lockfile-exact reproducible install. Second, npm run build to compile the
+Next.js standalone output. Third, npm run test with coverage collection — with
+no continue-on-error flag, so a single test failure kills the pipeline
+right there. That is the non-negotiable quality gate highlighted in the diagram.
+Fourth, npm audit to reject any dependency with a high or critical CVE.
 
 [07:55]
 
-Job two is docker-build, and it only starts if job one completes successfully.
-It builds the production image in three stages: a dependency install stage, a
-Next.js build stage, and a minimal Alpine runtime stage that copies only the
-compiled output — no source code, no test files, no node_modules in the final
-image. The runtime process runs as user nextjs with UID 1001, never as root.
-Then it runs a smoke test: start the container, retry curl /api/health up to
-five times, confirm a 200 response. If the application cannot pass its own
-health check inside the container, the pipeline fails.
+Job two — docker-build — only starts if job one completes successfully, as the
+diagram shows. It builds the production image in three stages: dependency
+install, Next.js build, and a minimal Alpine runtime that copies only the
+compiled output. The process runs as user nextjs with UID 1001, never as root.
+The final step is the same smoke test the diagram shows at the bottom:
+retry curl /api/health up to five times. Failure here means the pipeline fails.
 
 [08:15]
 
@@ -405,7 +401,9 @@ as production-ready code.
 ASSERTION: Three hundred twenty tests across three isolation layers form a
 quality gate at every stage of the CI pipeline.
 
-The evidence is the three-column breakdown.
+The evidence: two text columns detailing each test file on the left, and a
+test-layer hierarchy diagram on the right showing how layers connect to the
+CI quality gate.
 
 [10:38]
 
@@ -433,11 +431,11 @@ they require a running server, but they are fully documented and runnable locall
 
 [11:18]
 
-The CI quality gate: Jest runs on every push to main. If any of the three
-hundred twenty tests fails, the pipeline stops. The Docker build stage never
-starts. A coverage report is uploaded as a workflow artifact and retained for
-fourteen days. The evidence that the gate works: the GitHub Actions history
-shows green only when all tests pass.
+The CI quality gate, shown in the diagram's bottom box: Jest runs on every push
+to main. If any of the three hundred twenty tests fails, the pipeline stops —
+the Docker build stage never starts. A coverage report is retained for fourteen
+days. Unit and frontend tests both flow into that gate; integration tests flow
+in with a dashed line because they run locally, not in CI.
 
 [CLICK to next slide]
 

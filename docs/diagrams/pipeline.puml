@@ -1,0 +1,45 @@
+@startuml pipeline
+!theme plain
+skinparam defaultFontName Calibri
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam ActivityBorderColor #1e3a5f
+skinparam ActivityBackgroundColor #f0f4f8
+skinparam ActivityDiamondBorderColor #1e3a5f
+skinparam ActivityDiamondBackgroundColor #e8eaf6
+skinparam ArrowColor #2196f3
+skinparam ArrowThickness 2
+
+start
+:push / PR to **main**;
+
+partition "**JOB 1 — build-and-test**" {
+  :npm ci;
+  :npm run build;
+  :npm run test:coverage;
+  note right #ffcdd2
+    **QUALITY GATE**
+    no continue-on-error
+    failure stops pipeline here
+  end note
+  if (all 320 tests pass?) then (yes)
+    :npm audit --audit-level=high;
+  else (no)
+    #ffcdd2:**Pipeline FAILS**;
+    stop
+  endif
+}
+
+partition "**JOB 2 — docker-build**" {
+  :3-stage Docker build\n(Alpine · non-root nextjs:1001);
+  :smoke test: curl /api/health × 5;
+  if (health check OK?) then (yes)
+    #c8e6c9:**Pipeline succeeds**;
+  else (no)
+    #ffcdd2:**Pipeline FAILS**;
+    stop
+  endif
+}
+
+stop
+@enduml

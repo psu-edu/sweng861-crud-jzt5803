@@ -1,0 +1,39 @@
+@startuml architecture
+!theme plain
+skinparam defaultFontName Calibri
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam ArrowColor #2196f3
+skinparam ArrowThickness 2
+skinparam packageBorderColor #1e3a5f
+skinparam packageBorderThickness 2
+skinparam componentBackgroundColor #f0f4f8
+skinparam componentBorderColor #1e3a5f
+skinparam componentStyle rectangle
+
+package "Browser  (React 19 + Next.js 15)" #dce7f5 {
+  component "Dashboard · Metrics · Forms\nWeather Widget" as ui
+}
+
+package "API Layer  (15 Route Handlers)" #e8eaf6 {
+  component "JWT Auth · Rate Limiting\nInput Validation · BOLA checks" as api
+}
+
+package "Data Layer" #e8f5e9 {
+  database "SQLite + Sequelize\nUser · Metric · WeatherData · DomainEvent" as db
+}
+
+cloud "External Services" #fff8e1 {
+  component "Open-Meteo Weather API\n(10-min in-memory cache)" as weather
+}
+
+package "DevOps Stack" #fce4ec {
+  component "Docker · GitHub Actions\nPrometheus · Grafana" as devops
+}
+
+ui -down-> api : HTTPS / JWT Bearer
+api -down-> db : Sequelize ORM
+api -right-> weather : HTTP GET
+db -down-> devops : metrics + logs
+
+@enduml
