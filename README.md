@@ -12,30 +12,40 @@ A campus analytics platform designed to aggregate metrics from various universit
 
 ---
 
-## Week 4 Assignment: Front-End Development & Secure API Integration
-
-This week's deliverable implements a complete frontend application using **Next.js (App Router)**, **React 19**, **TailwindCSS 4**, and **NextAuth.js**. The frontend and backend are integrated into a single Next.js application.
+## Current Feature Status (All Weeks)
 
 ### Features Implemented
 
-| Feature                | Description                                                  | Status    |
-| ---------------------- | ------------------------------------------------------------ | --------- |
-| Login Page             | Username/password + Google OAuth login                       | Completed |
-| Centralized API Client | Shared client with auto token + 401/403 handling             | Completed |
-| Metrics List Page      | Table with pagination, category filter, loading/error states | Completed |
-| Metric Detail Page     | Full detail view with 404/403 handling                       | Completed |
-| Create/Edit Metric     | Form with client-side JS validation + success feedback       | Completed |
-| Responsive Design      | Mobile-first layout with Tailwind responsive classes         | Completed |
-| Security Headers       | X-Content-Type-Options, X-Frame-Options, HSTS                | Completed |
-| Route Protection       | Middleware redirects unauthenticated users                   | Completed |
+| Feature                   | Description                                                           | Status    |
+| ------------------------- | --------------------------------------------------------------------- | --------- |
+| Login Page                | Username/password + Google OAuth login                                | Completed |
+| Centralized API Client    | Shared client with auto token + 401/403 handling                      | Completed |
+| Metrics List Page         | Table with pagination, category filter, comma-formatted values        | Completed |
+| Metric Detail Page        | Full detail view with 404/403 handling                                | Completed |
+| Create/Edit Metric        | Form with client-side JS validation + success feedback                | Completed |
+| Admin Master View         | `superadmin` role sees ALL metrics across all users                   | Completed |
+| OAuth JWT Bridge          | Google OAuth users auto-receive a JWT via `/api/auth/token`           | Completed |
+| Responsive Design         | Mobile-first layout with Tailwind responsive classes                  | Completed |
+| Security Headers          | X-Content-Type-Options, X-Frame-Options, HSTS                         | Completed |
+| Route Protection          | Middleware redirects unauthenticated users                            | Completed |
+| Weather Widget (US units) | Live Penn State weather — temperature in °F, wind speed in mph        | Completed |
+| US Number Formatting      | All metric values displayed with commas; USD values prefixed with `$` | Completed |
+| Seed Data                 | `npm run seed` creates `superadmin` + 20 campus metrics               | Completed |
+| CI/CD Pipeline            | GitHub Actions: build → Jest tests → npm audit → Docker + smoke test  | Completed |
+| Structured Logging        | JSON logger with sensitive-key sanitization (`lib/logger.js`)         | Completed |
+| Prometheus Metrics        | Zero-dependency metrics module (`lib/metrics.js`), 4 metric families  | Completed |
+| Health Endpoints          | `/api/health`, `/api/health/live`, `/api/health/ready`                | Completed |
+| Grafana Dashboard         | Auto-provisioned 5-panel observability dashboard via Docker Compose   | Completed |
+| Docker Deployment         | Multi-stage Alpine build, non-root user `nextjs:1001`                 | Completed |
 
-### Frontend Architecture
+### Architecture
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 15 (App Router) — unified frontend + backend in one deploy
 - **UI:** React 19 with TailwindCSS 4
 - **Auth:** NextAuth.js 4 (Google OAuth + Credentials) + JWT Bearer tokens
 - **API Client:** Centralized `lib/apiClient.js` with automatic token attachment and error handling
 - **State:** Local component state for forms/UI, SessionProvider for auth
+- **Data:** SQLite + Sequelize 6, 4 models (User, Metric, WeatherData, DomainEvent)
 
 ---
 
@@ -171,22 +181,25 @@ sweng861-crud-jzt5803/
 
 ### Authentication
 
-| Method | Endpoint                  | Description             | Auth |
-| ------ | ------------------------- | ----------------------- | ---- |
-| POST   | `/api/auth/register`      | Register new user       | No   |
-| POST   | `/api/auth/login`         | Login with credentials  | No   |
-| GET    | `/api/auth/[...nextauth]` | NextAuth OAuth flow     | No   |
-| GET    | `/api/secure-data`        | Test protected endpoint | Yes  |
+| Method | Endpoint                  | Description                                             | Auth  |
+| ------ | ------------------------- | ------------------------------------------------------- | ----- |
+| POST   | `/api/auth/register`      | Register new user                                       | No    |
+| POST   | `/api/auth/login`         | Login with credentials, returns JWT                     | No    |
+| GET    | `/api/auth/[...nextauth]` | NextAuth OAuth flow                                     | No    |
+| GET    | `/api/auth/token`         | Exchange active NextAuth session for JWT (OAuth bridge) | Yes\* |
+| GET    | `/api/secure-data`        | Test protected endpoint                                 | Yes   |
+
+> `*` Requires NextAuth session cookie (used automatically by Google OAuth users)
 
 ### Metrics (CRUD)
 
-| Method | Endpoint           | Description      | Auth |
-| ------ | ------------------ | ---------------- | ---- |
-| GET    | `/api/metrics`     | List all metrics | Yes  |
-| GET    | `/api/metrics/:id` | Get metric by ID | Yes  |
-| POST   | `/api/metrics`     | Create metric    | Yes  |
-| PUT    | `/api/metrics/:id` | Update metric    | Yes  |
-| DELETE | `/api/metrics/:id` | Delete metric    | Yes  |
+| Method | Endpoint           | Description                                  | Auth |
+| ------ | ------------------ | -------------------------------------------- | ---- |
+| GET    | `/api/metrics`     | List metrics (admin sees all; users see own) | Yes  |
+| GET    | `/api/metrics/:id` | Get metric by ID                             | Yes  |
+| POST   | `/api/metrics`     | Create metric                                | Yes  |
+| PUT    | `/api/metrics/:id` | Update metric                                | Yes  |
+| DELETE | `/api/metrics/:id` | Delete metric                                | Yes  |
 
 ### Weather (3rd Party API)
 
@@ -404,7 +417,17 @@ Admin users can see **all metrics** from every user in the system.
 
 ---
 
-## Previous Assignments
+## Weekly Assignment Highlights
+
+### Week 7: Final Deliverables & End-to-End QA
+
+- Full auth stack audit: root-caused middleware secret mismatch causing redirect loop; fixed fallback chain alignment
+- OAuth JWT bridge: `GET /api/auth/token` + `JwtSynchronizer` in `AuthProvider.js` — Google OAuth users auto-receive a JWT
+- Data persistence fix: changed `sync({ alter: true })` → `sync()` in `ensureDb()` to prevent SQLite table recreation wipe
+- Admin visibility: `GET /api/metrics` now returns all metrics for `role: admin` users (master dashboard view)
+- `scripts/seed.js` + `npm run seed`: creates `superadmin` / `Campus123!` + 20 sample metrics across all 5 categories
+- UX polish: weather widget converted to °F / mph; metric values comma-formatted with en-US locale; USD values prefixed with `$`
+- Race condition fix: metrics page waits for NextAuth session resolution before making API calls
 
 ### Week 3: Backend Development
 
