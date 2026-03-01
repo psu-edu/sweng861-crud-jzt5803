@@ -60,6 +60,9 @@ The non-functional targets aren't just listed — they're implemented. OWASP Top
 500ms for reliability. And 320 automated tests that block any broken build from
 ever getting packaged.
 
+So now you know what the app does and why it was built. Let's look at how it's
+all put together architecturally.
+
 [CLICK to next slide]
 
 
@@ -80,6 +83,9 @@ Most web projects need two separate deployments — a React frontend and a
 Node.js backend. With Next.js App Router, you get both in one. That's one
 fewer image to build, one fewer server to scale, and zero CORS headers
 to configure.
+
+That architecture runs on a specific set of tools — and each one was picked
+for a specific reason. That's the next slide.
 
 [CLICK to next slide]
 
@@ -105,6 +111,9 @@ fails, the build stops right there — nothing gets packaged into Docker.
 And Prometheus plus Grafana: a five-panel SLO dashboard, no external cloud
 dependency. It runs in the same docker-compose stack as the app.
 
+Now let's go deeper on what those tools actually deliver — the features
+themselves.
+
 [CLICK to next slide]
 
 
@@ -125,6 +134,9 @@ On the right, the data features. Five server-enforced category enums, UUID
 keys to prevent ID enumeration, US locale formatting everywhere, a ten-minute
 weather cache so we're not hammering the external API, and an audit trail that
 writes every mutation asynchronously — so it never slows down the API response.
+
+All of those features need a reliable way to get built and deployed. That's
+the next slide.
 
 [CLICK to next slide]
 
@@ -153,6 +165,9 @@ On the right, three observability lines. Three health endpoints each with one
 role. Structured JSON logs with sensitive keys stripped. Four Prometheus metrics
 feeding a five-panel Grafana dashboard, with SLOs at 99.5% availability and
 p95 latency under 500ms.
+
+A lot of those DevOps files were drafted with AI help — and that's worth
+being upfront about.
 
 [CLICK to next slide]
 
@@ -188,6 +203,9 @@ needs a security pass.
 The five lines below the table are separate technical challenges I hit during
 development — each one was a root-cause investigation, not a quick fix.
 
+Those flaws were caught by review — but you also need a solid testing strategy
+to make sure broken code can't sneak through in the first place.
+
 [CLICK to next slide]
 
 
@@ -212,6 +230,9 @@ running server; they're not in CI.
 
 The bottom right cell is the quality gate rule: if any test fails, the pipeline
 stops. The Docker build stage never starts.
+
+With that foundation in place, let me close with what I actually learned
+from building all of this.
 
 [CLICK to next slide]
 
