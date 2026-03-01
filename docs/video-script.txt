@@ -341,7 +341,20 @@ specific fixes.
 
 [08:50]
 
-Five technical challenges are listed on the left side of this slide. Let me
+Let me be clear about how I used AI tools on this project, because the
+assignment asks for an honest reflection — not just the failures.
+
+AI was genuinely useful for three things: scaffolding boilerplate quickly
+(the initial GitHub Actions YAML, the Dockerfile structure, the Prometheus
+scrape configuration), explaining unfamiliar APIs when I hit edge cases, and
+proposing test case ideas I had not thought of. Those are real benefits, and
+I would use AI tools again for the same tasks.
+
+But — and this is the critical part — every AI-generated file that touched
+infrastructure or security went through a manual security review before it
+was committed. That review is what found the three flaws in this table.
+
+Five technical challenges are listed on the bottom of this slide. Let me
 call out the two that surfaced in Week 7 QA because they illustrate an
 important point about end-to-end testing.
 
@@ -401,41 +414,33 @@ as production-ready code.
 ASSERTION: Three hundred twenty tests across three isolation layers form a
 quality gate at every stage of the CI pipeline.
 
-The evidence: two text columns detailing each test file on the left, and a
-test-layer hierarchy diagram on the right showing how layers connect to the
-CI quality gate.
+The evidence is the table on this slide. Three columns, each representing one
+isolation layer. The bottom row of each column summarizes what makes that layer
+distinct.
 
 [10:38]
 
-Layer one — unit tests. One hundred ninety-six test cases across seven files.
-These test the individual library modules in complete isolation: authentication
-logic, input validation, rate limiter, domain event emitter, API error classes,
-weather service caching, and middleware security headers. No external
-dependencies, no database, no HTTP calls. They run in milliseconds and they run
-on every CI build.
+Column one: unit tests. One hundred ninety-six test cases — auth, validation,
+rate limiting, domain events, API errors, weather service, and middleware.
+No external dependencies, no database, no HTTP calls. They run in milliseconds.
 
-Layer two — frontend component tests. One hundred twenty-four test cases across
-seven files. These use React Testing Library in a jsdom environment — no browser
-required. They verify that the login form submits correctly and shows validation
-errors, that the metric form handles both create and edit modes, that the navbar
-renders auth-aware links, that the weather widget transitions through loading,
-success, and error states, and that the API client injects the JWT Bearer header
-on every request and handles 401 responses by redirecting to login.
+Column two: frontend component tests. One hundred twenty-four test cases using
+React Testing Library in a jsdom environment — no browser required. These cover
+the login form, metric form, navbar, weather widget, auth provider, API client,
+and spinner component. The bottom row confirms the environment: React Testing
+Library plus jsdom.
 
-Layer three — integration tests. One test file, api.test.js, using Node's
-built-in test runner to make real HTTP calls against a running server on port
-3001. These tests verify the complete request-response cycle end to end:
-register a user, log in, create a metric, read it, update it, delete it, fetch
-weather data, confirm domain events were written. These are not run in CI because
-they require a running server, but they are fully documented and runnable locally.
+Column three: integration tests. One file — api.test.js — using Node's built-in
+test runner against a live server on port 3001. The full cycle: register, login,
+CRUD, weather, domain events. These run locally, not in CI, because they need
+a running server.
 
 [11:18]
 
-The CI quality gate, shown in the diagram's bottom box: Jest runs on every push
-to main. If any of the three hundred twenty tests fails, the pipeline stops —
-the Docker build stage never starts. A coverage report is retained for fourteen
-days. Unit and frontend tests both flow into that gate; integration tests flow
-in with a dashed line because they run locally, not in CI.
+The bottom right cell of the table is the quality gate summary: pipeline FAILS
+if any test fails. Jest runs on every push to main. If any of the three hundred
+twenty tests fails, the Docker build stage never starts. A coverage report is
+retained for fourteen days.
 
 [CLICK to next slide]
 
@@ -467,22 +472,19 @@ They were not obvious. They required end-to-end testing to surface.
 
 [12:10]
 
-The four lessons in the middle column transfer directly to production systems.
+The three lessons in the middle column transfer directly to production systems.
 
-Structure logging before you ever need it. The shared lib/logger.js module made
-per-route instrumentation a two-line addition. Adding it after the fact would
-have required touching every route handler.
+Log JSON before you need it. The shared lib/logger.js module made per-route
+instrumentation a two-line addition. Adding it after the fact would have
+required touching every route handler.
 
-Observability cannot be retrofitted. Designing the metrics and logging modules
-as shared infrastructure from day one kept instrumentation additive. Had I tried
-to bolt it on at the end, it would have been a refactor, not a feature.
+AI drafts — humans review security. Three flaws in AI-generated CI YAML, two
+infrastructure bugs surfaced only in live QA. Security review of AI output is
+non-negotiable, not optional.
 
-AI is a drafting tool, not a security reviewer. Three security flaws in CI YAML,
-two infrastructure bugs in QA. Security review of AI output is not optional.
-
-And end-to-end QA surfaces what unit tests miss. All three hundred twenty unit
-and component tests passed throughout development. The runtime failures only
-emerged when testing the actual running application.
+End-to-end testing finds what unit tests miss. All three hundred twenty unit
+and component tests passed throughout development. The runtime failures — the
+data wipe and the auth redirect loop — emerged only in the running application.
 
 [12:42]
 
