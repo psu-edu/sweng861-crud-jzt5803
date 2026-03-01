@@ -77,15 +77,15 @@ npm start
 
 ### Admin Master Account
 
-After running `npm run seed` the following admin account is available:
+After running `npm run seed` the following superadmin account is available:
 
 | Field    | Value        |
 | -------- | ------------ |
-| Username | `admin`      |
+| Username | `superadmin` |
 | Password | `Campus123!` |
 | Role     | `admin`      |
 
-The seed script also creates **20 sample campus metrics** across all 5 categories (enrollment, facilities, academic, financial, other), so the metrics list is pre-populated for exploration.
+The seed script also creates **20 sample campus metrics** across all 5 categories (enrollment, facilities, academic, financial, other). Admins see **all metrics** regardless of who created them.
 
 ### Access Points
 
@@ -389,17 +389,18 @@ docker-compose down
 
 ## Seed Data & Admin Account
 
-Run once after installation to create the admin account and 20 sample metrics:
+Run once after installation to create the superadmin account and 20 sample metrics:
 
 ```bash
 npm run seed
 ```
 
-| Account | Username | Password     | Role  |
-| ------- | -------- | ------------ | ----- |
-| Admin   | `admin`  | `Campus123!` | admin |
+| Account    | Username     | Password     | Role  |
+| ---------- | ------------ | ------------ | ----- |
+| Superadmin | `superadmin` | `Campus123!` | admin |
 
 The seed creates 4 metrics in each of the 5 categories: `enrollment`, `facilities`, `academic`, `financial`, `other`.
+Admin users can see **all metrics** from every user in the system.
 
 ---
 

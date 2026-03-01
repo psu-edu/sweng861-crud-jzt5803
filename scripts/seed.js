@@ -1,11 +1,11 @@
 /**
- * Seed script — creates the admin master account and sample campus metrics.
+ * Seed script — creates the superadmin master account and sample campus metrics.
  *
  * Run from project root:
  *   node scripts/seed.js
  *
  * Admin credentials:
- *   username: admin
+ *   username: superadmin
  *   password: Campus123!
  */
 
@@ -20,7 +20,7 @@ const Metric = require('../lib/models/Metric');
 User.hasMany(Metric, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Metric.belongsTo(User, { foreignKey: 'userId' });
 
-const ADMIN_USERNAME = 'admin';
+const ADMIN_USERNAME = 'superadmin';
 const ADMIN_PASSWORD = 'Campus123!';
 
 const SAMPLE_METRICS = [
@@ -188,24 +188,26 @@ const SAMPLE_METRICS = [
 async function seed() {
   console.log('🌱  Seeding Campus Analytics database...\n');
 
-  await sequelize.sync({ alter: true });
+  // sync() only creates missing tables — never alters or wipes existing data
+  await sequelize.sync();
 
-  // --- Admin user ---
+  // --- Superadmin user (upsert: always ensure correct password + role) ---
+  const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
   let admin = await User.findOne({ where: { username: ADMIN_USERNAME } });
 
   if (admin) {
+    await admin.update({ password: hashedPassword, role: 'admin' });
     console.log(
-      `ℹ️   Admin user '${ADMIN_USERNAME}' already exists (id=${admin.id}) — skipping creation.`
+      `ℹ️   Superadmin '${ADMIN_USERNAME}' already exists (id=${admin.id}) — password and role refreshed.`
     );
   } else {
-    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
     admin = await User.create({
       username: ADMIN_USERNAME,
       password: hashedPassword,
       role: 'admin',
     });
     console.log(
-      `✅  Admin user created:  username=${ADMIN_USERNAME}  password=${ADMIN_PASSWORD}  role=admin`
+      `✅  Superadmin created:  username=${ADMIN_USERNAME}  password=${ADMIN_PASSWORD}  role=admin`
     );
   }
 

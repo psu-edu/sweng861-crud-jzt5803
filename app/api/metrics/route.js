@@ -33,7 +33,8 @@ export async function GET(request) {
     const offset = parseInt(searchParams.get('offset')) || 0;
     const category = searchParams.get('category');
 
-    const whereClause = { userId: user.id };
+    // Admin users see all metrics; regular users see only their own
+    const whereClause = user.role === 'admin' ? {} : { userId: user.id };
     if (category && VALID_CATEGORIES.includes(category)) {
       whereClause.category = category;
     }

@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { apiGet, apiDelete } from '@/lib/apiClient';
+import { useSession } from 'next-auth/react';
+import { apiGet, apiDelete, getToken } from '@/lib/apiClient';
 import Spinner from '@/app/components/Spinner';
 
 const CATEGORIES = [
@@ -25,6 +26,7 @@ export default function MetricsPage() {
 
 function MetricsContent() {
   const searchParams = useSearchParams();
+  const { status } = useSession();
   const [metrics, setMetrics] = useState([]);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -45,6 +47,10 @@ function MetricsContent() {
   }, [searchParams]);
 
   const fetchMetrics = useCallback(async () => {
+    // Wait until session is resolved and a JWT is available
+    if (status === 'loading') return;
+    if (!getToken()) return;
+
     setLoading(true);
     setError(null);
     try {
@@ -68,7 +74,7 @@ function MetricsContent() {
     } finally {
       setLoading(false);
     }
-  }, [category, pagination.limit, pagination.offset]);
+  }, [status, category, pagination.limit, pagination.offset]);
 
   useEffect(() => {
     fetchMetrics();
