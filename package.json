@@ -15,7 +15,8 @@
     "test:all": "npm run test:coverage && npm run test:integration",
     "test:ci": "jest --coverage --ci --verbose && node --test __tests__/api.test.js",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "seed": "node scripts/seed.js"
   },
   "repository": {
     "type": "git",

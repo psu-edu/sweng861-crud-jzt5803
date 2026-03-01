@@ -56,9 +56,12 @@ cd sweng861-crud-jzt5803
 # Install dependencies
 npm install
 
-# Copy environment configuration
+# Copy environment configuration and set secrets
 cp .env.example .env.local
-# Edit .env.local with your values (see Environment Variables below)
+# Edit .env.local — set NEXTAUTH_SECRET and JWT_SECRET (see Environment Variables below)
+
+# Seed the database (admin account + 20 sample metrics)
+npm run seed
 ```
 
 ### Running the Application
@@ -71,6 +74,18 @@ npm run dev
 npm run build
 npm start
 ```
+
+### Admin Master Account
+
+After running `npm run seed` the following admin account is available:
+
+| Field    | Value        |
+| -------- | ------------ |
+| Username | `admin`      |
+| Password | `Campus123!` |
+| Role     | `admin`      |
+
+The seed script also creates **20 sample campus metrics** across all 5 categories (enrollment, facilities, academic, financial, other), so the metrics list is pre-populated for exploration.
 
 ### Access Points
 
@@ -368,6 +383,23 @@ docker-compose down
 - **Password Hashing:** bcrypt with cost factor 12
 - **Route Protection:** Next.js middleware redirects unauthenticated users
 - **Centralized API Client:** Automatic token attachment, 401/403 handling
+- **OAuth JWT Bridge:** `GET /api/auth/token` issues a JWT for Google OAuth sessions so the API client works transparently
+
+---
+
+## Seed Data & Admin Account
+
+Run once after installation to create the admin account and 20 sample metrics:
+
+```bash
+npm run seed
+```
+
+| Account | Username | Password     | Role  |
+| ------- | -------- | ------------ | ----- |
+| Admin   | `admin`  | `Campus123!` | admin |
+
+The seed creates 4 metrics in each of the 5 categories: `enrollment`, `facilities`, `academic`, `financial`, `other`.
 
 ---
 

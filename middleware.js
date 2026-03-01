@@ -24,7 +24,10 @@ export async function middleware(request) {
   if (isProtectedPage) {
     const token = await getToken({
       req: request,
-      secret: process.env.NEXTAUTH_SECRET,
+      secret:
+        process.env.NEXTAUTH_SECRET ||
+        process.env.JWT_SECRET ||
+        'default_dev_secret',
     });
 
     if (!token) {
