@@ -4,6 +4,8 @@
 **Course:** SWENG 861 | Software Construction
 **Semester:** Spring 2026
 
+[![CI – Build, Test, Package](https://github.com/psu-edu/sweng861-crud-jzt5803/actions/workflows/ci.yml/badge.svg)](https://github.com/psu-edu/sweng861-crud-jzt5803/actions/workflows/ci.yml)
+
 ## Project Description
 
 A campus analytics platform designed to aggregate metrics from various university domains (Enrollment, Facilities, etc.) into a centralized dashboard with secure APIs, a modern frontend, and 3rd party integrations.
@@ -93,7 +95,8 @@ sweng861-crud-jzt5803/
 │   │   │   ├── login/            # POST /api/auth/login
 │   │   │   └── register/         # POST /api/auth/register
 │   │   ├── events/               # GET /api/events
-│   │   ├── health/               # GET /api/health
+│   │   ├── health/               # GET /api/health, /live, /ready
+│   │   ├── prometheus/           # GET /api/prometheus (metrics scrape)
 │   │   ├── metrics/              # GET, POST /api/metrics
 │   │   │   └── [id]/             # GET, PUT, DELETE /api/metrics/:id
 │   │   ├── secure-data/          # GET /api/secure-data
@@ -125,6 +128,8 @@ sweng861-crud-jzt5803/
 │   │   ├── User.js
 │   │   ├── WeatherData.js
 │   │   └── index.js              # Model associations + ensureDb()
+│   ├── logger.js                 # Structured JSON logger (sensitive-key sanitized)
+│   ├── metrics.js                # Prometheus-compatible in-memory metrics
 │   ├── rateLimit.js              # In-memory rate limiter
 │   ├── services/
 │   │   ├── eventEmitter.js       # Domain event service
@@ -137,8 +142,12 @@ sweng861-crud-jzt5803/
 ├── middleware.js                  # Next.js middleware (security + auth)
 ├── next.config.mjs               # Next.js configuration
 ├── package.json
-├── Dockerfile
-└── docker-compose.yml
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # GitHub Actions CI/CD pipeline
+├── Dockerfile                     # Multi-stage build, non-root user
+├── docker-compose.yml             # App + Prometheus + Grafana
+└── prometheus.yml                 # Prometheus scrape configuration
 ```
 
 ---
@@ -178,6 +187,15 @@ sweng861-crud-jzt5803/
 | Method | Endpoint      | Description        | Auth |
 | ------ | ------------- | ------------------ | ---- |
 | GET    | `/api/events` | List domain events | Yes  |
+
+### Health & Observability
+
+| Method | Endpoint            | Description                                | Auth |
+| ------ | ------------------- | ------------------------------------------ | ---- |
+| GET    | `/api/health`       | `{status, db, uptime, timestamp, version}` | No   |
+| GET    | `/api/health/live`  | Liveness probe – always 200                | No   |
+| GET    | `/api/health/ready` | Readiness probe – 200 or 503 if DB down    | No   |
+| GET    | `/api/prometheus`   | Prometheus metrics scrape endpoint         | No   |
 
 ---
 
@@ -225,15 +243,84 @@ curl "http://localhost:3000/api/weather/preview?latitude=40.7983&longitude=-77.8
 
 ## Testing
 
-### Run Integration Tests
+### Unit & Frontend Tests (~320 test cases)
 
 ```bash
-npm test
+# Run all Jest tests with coverage (self-contained, used in CI)
+npm run test:coverage
+
+# Run unit tests only
+npm run test:unit
+
+# Run frontend component tests only
+npm run test:frontend
 ```
+
+| Suite    | Files | Tests | Coverage areas                                                        |
+| -------- | ----- | ----- | --------------------------------------------------------------------- |
+| Unit     | 7     | ~196  | auth, validation, rate limiting, events, errors, weather, middleware  |
+| Frontend | 7     | ~124  | LoginPage, MetricForm, Navbar, WeatherWidget, AuthProvider, apiClient |
+
+### Integration Tests
+
+```bash
+# Requires a running server on port 3001
+PORT=3001 npm run dev   # in one terminal
+npm run test:integration # in another terminal
+```
+
+The integration suite (`__tests__/api.test.js`) runs full HTTP cycles: register → login → CRUD → weather → domain events.
 
 ### Postman Collection
 
-Import the Postman collection from `postman/CampusAnalytics.postman_collection.json` for interactive API testing.
+Import `postman/CampusAnalytics.postman_collection.json` for interactive API testing with pre-configured status-code assertions.
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) triggers on every push and pull request to `main`.
+
+| Job              | Steps                                                                                   | Gate                    |
+| ---------------- | --------------------------------------------------------------------------------------- | ----------------------- |
+| `build-and-test` | checkout → Node 18 → `npm ci` → `npm run build` → `npm run test:coverage` → `npm audit` | Fails if any test fails |
+| `docker-build`   | checkout → Docker Buildx → build `campus-analytics:<sha>` → smoke-test `/api/health`    | Needs `build-and-test`  |
+
+---
+
+## Observability Stack
+
+### Start the Full Stack (App + Prometheus + Grafana)
+
+```bash
+docker-compose up -d
+```
+
+| Service    | URL                   | Credentials       |
+| ---------- | --------------------- | ----------------- |
+| App        | http://localhost:3000 | (your login)      |
+| Prometheus | http://localhost:9090 | —                 |
+| Grafana    | http://localhost:4000 | admin / campus123 |
+
+### Key Observability Endpoints
+
+```bash
+curl http://localhost:3000/api/health       # {status, db, uptime, timestamp, version}
+curl http://localhost:3000/api/health/live  # liveness probe – always 200
+curl http://localhost:3000/api/health/ready # readiness probe – 200 or 503
+curl http://localhost:3000/api/prometheus   # Prometheus text metrics
+```
+
+### Prometheus Metrics
+
+| Metric                     | Type      | Labels                              |
+| -------------------------- | --------- | ----------------------------------- |
+| `http_requests_total`      | Counter   | method, route, status               |
+| `http_request_duration_ms` | Histogram | method, route (buckets: 50–2000 ms) |
+| `metrics_created_total`    | Counter   | — (domain KPI)                      |
+| `auth_logins_total`        | Counter   | status (success\|failure)           |
+
+The Grafana dashboard ("Campus Analytics – Observability") auto-provisions with 5 panels: HTTP Request Rate, Error Rate, p95 Latency, Metrics Created, and Successful Logins.
 
 ---
 
@@ -285,6 +372,46 @@ docker-compose down
 ---
 
 ## Previous Assignments
+
+### Week 3: Backend Development
+
+- 3rd Party API Integration (Open-Meteo weather)
+- Full CRUD operations for campus metrics
+- Multi-tenancy with BOLA prevention
+- Domain events with async processing
+- Rate limiting and caching
+
+### Week 2: Authentication & Protected APIs
+
+- Google OAuth 2.0 integration
+- JWT-based authentication
+- Protected API endpoints
+
+### Week 5: Automated Testing
+
+- ~320 automated tests (Jest 30 + React Testing Library)
+- Unit tests for all `lib/` modules: auth, validation, rate limiting, event emitter, errors, weather
+- Frontend component tests for all React components (login, metrics, navbar, weather widget)
+- Integration test suite covering the full HTTP lifecycle
+- Code coverage reporting (lcov + HTML, uploaded as CI artifact)
+
+### Week 6: DevOps & Observability
+
+- Multi-stage Docker build: non-root `nextjs:1001` user, Alpine base, built-in `HEALTHCHECK`
+- GitHub Actions CI/CD: build → Jest quality gate → `npm audit` → Docker image + smoke test
+- Structured JSON logging (`lib/logger.js`) with automatic sensitive-key sanitization
+- Zero-dependency Prometheus metrics (`lib/metrics.js`) — 4 metric families with histogram
+- Three-tier health endpoints: `/api/health`, `/api/health/live`, `/api/health/ready`
+- Grafana observability dashboard auto-provisioned via Docker Compose (5 panels)
+- Scalability & FinOps analysis: SQLite bottlenecks identified, PostgreSQL migration path defined
+- AI/GenAI DevSecOps audit: 3 security issues found and fixed in AI-generated CI/CD YAML
+
+### Week 4: Frontend Development
+
+- Next.js App Router frontend with React 19 and TailwindCSS 4
+- Metrics CRUD pages with pagination, category filters, and form validation
+- Login/Register page (Credentials + Google OAuth)
+- Responsive design with security headers middleware
 
 ### Week 3: Backend Development
 
