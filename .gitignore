@@ -137,10 +137,12 @@ vite.config.ts.timestamp-*
 
 context.md
 
+# Documentation folder (keep locally only)
+docs/
+
 # Markdown files (except README.md)
 *.md
 !README.md
-docs/*.md
 
 # PDF files
 *.pdf
